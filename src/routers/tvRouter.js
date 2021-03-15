@@ -13,4 +13,3 @@ router.use('/{seriesId}', seriesAndUsersRouter);
 
 // býr til nýja sjónvarps seríu, aðeins ef notandi er stjórnandi
 // router.post('/', catchErrors(allAvailable));
-
