@@ -241,7 +241,7 @@ Sett verða fyrir tvö hópverkefni þar sem hvort um sig gildir 10%, samtals 20
 
 ---
 
-> Útgáfa 0.2
+> Útgáfa 0.3
 
 | Útgáfa | Lýsing |
 |--------|--------|
