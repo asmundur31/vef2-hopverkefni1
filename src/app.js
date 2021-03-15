@@ -1,7 +1,10 @@
 import express from 'express';
 import dotenv from 'dotenv';
 
-import { router as mainRouter } from './mainRouter.js';
+import { router as mainRouter } from './routers/mainRouter.js';
+import { router as tvRouter } from './routers/tvRouter.js';
+import { router as genresRouter } from './routers/genresRouter.js';
+import { router as usersRouter } from './routers/usersRouter.js';
 
 dotenv.config();
 
@@ -13,7 +16,10 @@ const app = express();
 
 app.use(express.json());
 
-app.use(mainRouter);
+app.use('/', mainRouter);
+app.use('/tv', tvRouter);
+app.use('/genres', genresRouter);
+app.use('/users', usersRouter);
 
 function notFoundHandler(req, res, next) { // eslint-disable-line
   console.warn('Not found', req.originalUrl);
