@@ -1,0 +1,31 @@
+{
+  "name": "vef2-2021-h1",
+  "version": "1.0.0",
+  "description": "Hópverkefni 1 í vefforitun 2 árið 2021",
+  "main": "./src/app.js",
+  "scripts": {
+    "test": "eslint ./src/*.js ./src/routers/*.js",
+    "dev": "nodemon ./src/app.js",
+    "start": "node ./src/app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/asmundur31/vef2-hopverkefni1.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/asmundur31/vef2-hopverkefni1/issues"
+  },
+  "homepage": "https://github.com/asmundur31/vef2-hopverkefni1#readme",
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "eslint": "^7.22.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.22.1",
+    "nodemon": "^2.0.7"
+  }
+}
