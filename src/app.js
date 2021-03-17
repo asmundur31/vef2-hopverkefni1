@@ -3,6 +3,9 @@ import dotenv from 'dotenv';
 
 import { router as mainRouter } from './routers/mainRouter.js';
 import { router as tvRouter } from './routers/tvRouter.js';
+import { router as seriesAndUsersRouter } from './routers/seriesAndUsersRouter.js';
+import { router as seasonsRouter } from './routers/seasonsRouter.js';
+import { router as episodesRouter } from './routers/episodesRouter.js';
 import { router as genresRouter } from './routers/genresRouter.js';
 import { router as usersRouter } from './routers/usersRouter.js';
 
@@ -18,6 +21,9 @@ app.use(express.json());
 
 app.use('/', mainRouter);
 app.use('/tv', tvRouter);
+app.use('/tv/:seriesId', seriesAndUsersRouter);
+app.use('/tv/:seriesId/season', seasonsRouter);
+app.use('/tv/:seriesId/season/:seasonId/episode', episodesRouter);
 app.use('/genres', genresRouter);
 app.use('/users', usersRouter);
 
