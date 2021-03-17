@@ -12,4 +12,5 @@ async function allAvailable(req, res) {
   return res.json(all);
 }
 
+// Birtir allar fyrirspurnir sem eru í boði
 router.get('/', catchErrors(allAvailable));
