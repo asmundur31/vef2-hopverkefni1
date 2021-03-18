@@ -12,6 +12,7 @@ function getSeries(req, res) {
 }
 
 function newSeries(req, res) {
+  console.log(req.body.image);
   // Tökum við gögnum og vistum í gagnagrunn
   // Skilum síðan nýju seríunni
   const newData = {

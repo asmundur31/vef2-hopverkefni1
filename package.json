@@ -4,6 +4,7 @@
   "description": "Hópverkefni 1 í vefforitun 2 árið 2021",
   "main": "./src/app.js",
   "scripts": {
+    "uploadImages": "node ./src/cloudinary.js",
     "test": "eslint ./src/*.js ./src/routers/*.js",
     "dev": "nodemon ./src/app.js",
     "start": "node ./src/app.js"
@@ -19,6 +20,8 @@
   },
   "homepage": "https://github.com/asmundur31/vef2-hopverkefni1#readme",
   "dependencies": {
+    "cloudinary": "^1.25.0",
+    "cloudinary-core": "^2.11.3",
     "dotenv": "^8.2.0",
     "express": "^4.17.1"
   },
