@@ -59,9 +59,12 @@ export async function insertSerie(data) {
   return query(q, values);
 }
 
-/* export async function insertSeason(data) {
-  const q = 'INSERT INTO series(
-      name, number, air_date, overview, poster, serie_id) VALUES ($1, $2, $3, $4, $5, $6)';
+export async function insertSeason(data) {
+  const q = 'INSERT INTO seasons(name, number, air_date, overview, poster, serie_id) VALUES ($1, $2, $3, $4, $5, $6)';
+  if (data.airDate === '') {
+    // eslint-disable-next-line no-param-reassign
+    data.airDate = null;
+  }
   const values = [
     data.name,
     data.number,
@@ -72,21 +75,46 @@ export async function insertSerie(data) {
   ];
 
   return query(q, values);
-} */
-//
-/* export async function insertEpisode(data) {
-  const q = 'INSERT INTO series(
-      name, number, air_date, overview, season_id) VALUES ($1, $2, $3, $4, $5)';
+}
+
+export async function insertEpisode(data) {
+  const q = 'INSERT INTO episodes(name, number, air_date, overview, season_number, series_id) VALUES ($1, $2, $3, $4, $5, $6)';
+  if (data.airDate === '') {
+    // eslint-disable-next-line no-param-reassign
+    data.airDate = null;
+  }
   const values = [
     data.name,
     data.number,
     data.airDate,
     data.overview,
     data.season,
+    data.serieId,
   ];
 
   return query(q, values);
-} */
+}
+
+export async function insertGenres(data) {
+  const q = 'INSERT INTO genres(name) VALUES ($1) RETURNING id';
+  const answer = await query(q, [data]);
+  return answer.rows;
+}
+
+export async function selectGenreId(data) {
+  const q = 'SELECT id FROM genres WHERE name = $1';
+  const answer = await query(q, [data.toString()]);
+  return answer.rows;
+}
+
+export async function insertSeriesGenres(idSeries, idGenres) {
+  const q = 'INSERT INTO series_genres(serie_id, genre_id) VALUES ($1, $2)';
+  const values = [
+    idSeries,
+    idGenres,
+  ];
+  return query(q, values);
+}
 
 /**
  * Sækir allar undirskriftir
@@ -94,7 +122,7 @@ export async function insertSerie(data) {
  * @returns {array} Fylki af öllum umsóknum
  */
 /* export async function select() {
-  const result = await query('SELECT * FROM signatures ORDER BY id');
+  const result = await query('SELECT id FROM genres WHERE name = $1', ['Crime']);
 
   return result.rows;
 } */
