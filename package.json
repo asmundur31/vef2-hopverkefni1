@@ -19,8 +19,15 @@
   },
   "homepage": "https://github.com/asmundur31/vef2-hopverkefni1#readme",
   "dependencies": {
+    "bcrypt": "^5.0.1",
     "dotenv": "^8.2.0",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "express-validator": "^6.10.0",
+    "jsonwebtoken": "^8.5.1",
+    "passport": "^0.4.1",
+    "passport-jwt": "^4.0.0",
+    "pg": "^8.5.1",
+    "xss": "^1.0.8"
   },
   "devDependencies": {
     "eslint": "^7.22.0",
