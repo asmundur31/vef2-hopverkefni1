@@ -19,8 +19,13 @@
   },
   "homepage": "https://github.com/asmundur31/vef2-hopverkefni1#readme",
   "dependencies": {
+    "cloudinary": "^1.25.0",
+    "cloudinary-core": "^2.11.3",
+    "csv-parser": "^3.0.0",
     "dotenv": "^8.2.0",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "jquery-csv": "^1.0.11",
+    "pg": "^8.5.1"
   },
   "devDependencies": {
     "eslint": "^7.22.0",
