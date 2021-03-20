@@ -116,6 +116,22 @@ export async function insertSeriesGenres(idSeries, idGenres) {
   return query(q, values);
 }
 
+export async function updateImageFromSeries(newImage, oldImage) {
+  const q = 'UPDATE series SET image=$1 WHERE image=$2';
+  return query(q, [newImage, oldImage]);
+}
+
+export async function imageExistsInSeries(data) {
+  const q = 'SELECT EXISTS(SELECT 1 FROM series WHERE image = $1);';
+  const answer = await query(q, [data]);
+  return answer.rows;
+}
+
+export async function updateImageFromSeasons(newImage, oldImage) {
+  const q = 'UPDATE seasons SET poster=$1 WHERE poster=$2';
+  return query(q, [newImage, oldImage]);
+}
+
 /**
  * Sækir allar undirskriftir
  *

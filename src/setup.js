@@ -1,5 +1,7 @@
 import fs, { promises } from 'fs';
 import csvParser from 'csv-parser';
+import cloudinary from 'cloudinary';
+import dotenv from 'dotenv';
 import {
   query,
   insertSerie,
@@ -8,11 +10,23 @@ import {
   insertGenres,
   insertSeriesGenres,
   selectGenreId,
+  updateImageFromSeries,
+  imageExistsInSeries,
+  updateImageFromSeasons,
 } from './db.js';
 
 const schemaFile = './sql/schema.sql';
 const dropFile = './sql/drop.sql';
-const genresWithId = [];
+const dir = './data/img/';
+const files = fs.readdirSync(dir);
+
+dotenv.config();
+
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_KEY,
+  api_secret: process.env.CLOUD_SECRET,
+});
 
 function getData(file) {
   const result = [];
@@ -85,18 +99,23 @@ async function addGenres() {
   try {
     const data = await getData('./data/series.csv');
     // eslint-disable-next-line array-callback-return
-    data.forEach(async (d) => {
+    const genresWithId = data.map(async (d) => {
       const genreForSeries = d.genres.split(',');
-      genreForSeries.forEach(async (g) => {
+      const answer = genreForSeries.map(async (g) => {
         if (Object.values(genres).indexOf(g) <= -1) {
           genres.push(g);
           const ID = await insertGenres(g);
-          genresWithId.push({ id: ID[0].id, genre: g });
+          // genresWithId.push({ id: ID[0].id, genre: g });
           // await insertSeriesGenres(d.id, ID);
           // console.log(genresWithId);
+          const { id } = ID[0];
+          return { id, g };
         }
       });
+      // eslint-disable-next-line no-return-await
+      return await Promise.all(answer);
     });
+    return await Promise.all(genresWithId);
   } catch (error) {
     console.error('Error while parsing csv data: ', error.message);
   }
@@ -129,6 +148,28 @@ async function addSeriesGenres() {
   }
 }
 
+async function uploadImageToCloudinary() {
+  const response = files.map(async (file) => {
+    const answer = await cloudinary.v2.uploader.upload(
+      `./data/img/${file}`,
+    );
+    return { file, answer };
+  });
+  // eslint-disable-next-line no-return-await
+  return await Promise.all(response);
+}
+
+async function updateImageInDatabase(urls) {
+  urls.forEach(async (url) => {
+    const result = await imageExistsInSeries(url.file);
+    if (result[0].exists) {
+      await updateImageFromSeries(url.answer.secure_url, url.file);
+    } else {
+      await updateImageFromSeasons(url.answer.secure_url, url.file);
+    }
+  });
+}
+
 async function main() {
   try {
     const drop = await promises.readFile(dropFile);
@@ -156,6 +197,10 @@ async function main() {
   await addGenres();
 
   await addSeriesGenres();
+
+  const urls = await uploadImageToCloudinary();
+
+  await updateImageInDatabase(urls);
 
   console.info('Data inserted');
 

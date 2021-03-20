@@ -42,9 +42,9 @@ CREATE TABLE IF NOT EXISTS episodes(
     air_date timestamp with time zone,
     overview text,
     season_number int not null,
-    series_id int not null
+    series_id int not null,
     -- constraint fk_seasons foreign key(season_number) references seasons(number), --number??
-    -- constraint fk_series foreign key(series_id) references series(id)
+    constraint fk_series foreign key(series_id) references series(id)
 );
 
 CREATE TABLE IF NOT EXISTS users(
