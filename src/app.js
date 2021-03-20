@@ -9,11 +9,19 @@ import { router as episodesRouter } from './routers/episodesRouter.js';
 import { router as genresRouter } from './routers/genresRouter.js';
 import { router as usersRouter } from './routers/usersRouter.js';
 
+import passport from './authentication.js';
+
 dotenv.config();
 
 const {
   PORT: port = 3000,
+  DATABASE_URL: databaseUrl,
 } = process.env;
+
+if (!databaseUrl) {
+  console.error('Vantar DATABASE_URL .env gildi');
+  process.exit(1);
+}
 
 const app = express();
 
@@ -26,6 +34,8 @@ app.use('/tv/:seriesId/season', seasonsRouter);
 app.use('/tv/:seriesId/season/:seasonId/episode', episodesRouter);
 app.use('/genres', genresRouter);
 app.use('/users', usersRouter);
+
+app.use(passport.initialize());
 
 function notFoundHandler(req, res, next) { // eslint-disable-line
   console.warn('Not found', req.originalUrl);
