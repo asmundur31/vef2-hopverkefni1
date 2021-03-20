@@ -1,28 +1,19 @@
-DROP TABLE IF EXISTS series_genres;
-DROP TABLE IF EXISTS users_series;
-DROP TABLE IF EXISTS episodes;
-DROP TABLE IF EXISTS seasons;
-DROP TABLE IF EXISTS series;
-DROP TABLE IF EXISTS genres;
-DROP TABLE IF EXISTS users;
-
-
 CREATE TABLE IF NOT EXISTS series(
-  id int not null primary key,
+  id int not null unique primary key,
   name varchar(128) not null,
   air_date timestamp with time zone,
   in_production boolean,
-  tagline varchar(128),
-  image varchar(1000) not null,
-  description varchar(1000),
+  tagline text,
+  image text not null,
+  description text,
   language varchar(2) not null,
-  network varchar(128),
-  url varchar(1000)
+  network text,
+  url text
 );
 
 CREATE TABLE IF NOT EXISTS genres(
     id serial primary key,
-    name varchar(128) not null
+    name text not null
 );
 
 CREATE TABLE IF NOT EXISTS series_genres(
@@ -38,21 +29,21 @@ CREATE TABLE IF NOT EXISTS seasons(
     name varchar(128) not null,
     number int not null check (number > 0),
     air_date timestamp with time zone,
-    overview varchar(400),
-    poster varchar(400) not null,
+    overview text,
+    poster text not null,
     serie_id int not null,
     constraint fk_series foreign key(serie_id) references series(id)
 );
 
 CREATE TABLE IF NOT EXISTS episodes(
-    id int not null primary key,
+    id serial primary key,
     name varchar(128) not null,
     number int not null check (number > 0),
     air_date timestamp with time zone,
-    overview varchar(400),
+    overview text,
     season_number int not null,
     series_id int not null,
-    constraint fk_seasons foreign key(season_number) references seasons(number), --number??
+    -- constraint fk_seasons foreign key(season_number) references seasons(number), --number??
     constraint fk_series foreign key(series_id) references series(id)
 );
 

@@ -151,7 +151,7 @@ Ef beðið er um einingu eða reynt að framkvæma aðgerð sem ekki er leyfi fy
 * `/users/register`
   * `POST` staðfestir og býr til notanda. Skilar auðkenni og netfangi. Notandi sem búinn er til skal aldrei vera stjórnandi
 * `/users/login`
-  * `POST` með netfangi og lykilorði skilar token ef gögn rétt
+  * `POST` með netfangi (eða notandanafni) og lykilorði skilar token ef gögn rétt
 * `/users/me`
   * `GET` skilar upplýsingum um notanda sem á token, auðkenni og netfangi, aðeins ef notandi innskráður
   * `PATCH` uppfærir netfang, lykilorð eða bæði ef gögn rétt, aðeins ef notandi innskráður
@@ -241,11 +241,11 @@ Sett verða fyrir tvö hópverkefni þar sem hvort um sig gildir 10%, samtals 20
 
 ---
 
-> Útgáfa 0.2
+> Útgáfa 0.4
 
-|--------|--------|
 | Útgáfa | Lýsing |
+|--------|--------|
 | 0.1    | _Fyrsta útgáfa_, ekki er búið að fullskilgreina vefþjónustuskil eða útbúa gögn í byrjun, stefnt á að verði komið 7.–8. febrúar. Nota skal tíma þangað til, til þess að finna hóp, skipta með sér verkum, ákveða samskipti, og skilgreina tímalínu fyrir vinnu á verkefninu. [Yfirferð í fyrirlestri 4](https://youtu.be/gQEFFKGumG0) |
 | 0.2    | Lýsing á gögnum, lýsing á þjónustum, mat, gögn |
 | 0.3    | Lagfæringar á lýsingu. Vísun á vefþjónustu sýnilausnar |
-|--------|--------|
+| 0.4    | /user/login má taka við notandanafni |
