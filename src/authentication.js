@@ -95,3 +95,16 @@ export function requireAuthentication(req, res, next) {
     },
   )(req, res, next);
 }
+
+/**
+ * Fall sem athugar hvort innskráður notandi sé admin
+ * @param {Object} req Request hluturinn
+ * @param {Object} res Response hluturinn
+ * @param {function} next fallið sem er kallað næst í
+ */
+export function ensureAdmin(req, res, next) {
+  if (req.user.admin) {
+    return next();
+  }
+  return res.json({ error: 'Ófullnægjandi réttindi' });
+}

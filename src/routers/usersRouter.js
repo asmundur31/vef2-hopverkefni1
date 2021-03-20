@@ -1,25 +1,42 @@
 import express from 'express';
-import { body, validationResult } from 'express-validator';
-import xss from 'xss';
+import { validationResult } from 'express-validator';
 
-import { login, requireAuthentication } from '../authentication.js';
 import {
-  findByUsername,
-  findByEmail,
-  comparePasswords,
+  login,
+  requireAuthentication,
+  ensureAdmin,
+} from '../authentication.js';
+import {
   createNewUser,
+  findById,
+  getAllUsers,
+  updateUserAdmin,
+  updateUserMe,
 } from '../users.js';
+import {
+  validationLogin,
+  validationRegister,
+  validationUpdateAdmin,
+  validationUpdate,
+  validationGetUser,
+  xssSanitizationMiddleware,
+  sanitize,
+} from '../validation.js';
 import { catchErrors } from '../utils.js';
 
 export const router = express.Router();
 
-function allUsers(req, res) {
-  const users = {
-    allUsers: `Hér eiga að koma allir users`,
-  };
+async function allUsers(req, res) {
+  const users = await getAllUsers();
   return res.json(users);
 }
 
+/**
+ * Fallið sem kallað er í til að búa til nýjan notanda
+ * @param {Object} req Request hluturinn
+ * @param {Object} res Response hluturinn
+ * @returns skilar annaðhvort usernum sem var verið að búa til eða errors
+ */
 async function registerUser(req, res) {
   const { username, email, password } = req.body;
   const user = await createNewUser(username, email, password);
@@ -59,103 +76,46 @@ function loggedInUser(req, res) {
   return res.json(user);
 }
 
-function updateLoggedInUser(req, res) {
-  const user = {
-    user: `Uppfærum innskráðan notanda`,
-  };
+async function updateLoggedInUser(req, res) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(401).json(errors);
+  }
+  const { email = '', password = '' } = req.body;
+  const user = await updateUserMe(req.user, email, password);
   return res.json(user);
 }
 
-function oneUser(req, res) {
+async function oneUser(req, res) {
   const { userId } = req.params;
-  const user = {
-    oneUsers: `Hér kemur user með userId = ${userId}`,
-  };
-  return res.json(user);
+  const user = await findById(userId);
+  if (user) {
+    // Fjarlægjum lykilorð
+    delete user.password;
+    return res.json(user);
+  }
+  const errors = validationResult(req);
+  return res.status(404).json(errors);
 }
 
-function updateUser(req, res) {
+async function updateUser(req, res) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(401).json(errors);
+  }
   const { userId } = req.params;
-  const user = {
-    update: `Uppfærum user með userId = ${userId}`,
-  };
+  const { admin } = req.body;
+  const user = await updateUserAdmin(userId, admin);
   return res.json(user);
 }
-
-const validationLogin = [
-  body('username')
-    .isLength({ min: 1 })
-    .withMessage('Nafn má ekki vera tómt'),
-  body('username')
-    .custom(async (value, { req }) => {
-      // Athugum hvort notandi sé til og hefur rétt lykilorð
-      const exists = await findByUsername(req.username);
-      if (!exists) {
-        return Promise.reject();
-      }
-      const passwordIsCorrect = await comparePasswords(req.password, exists.password);
-      if (passwordIsCorrect) {
-        return true;
-      }
-      return Promise.reject();
-    })
-    .withMessage('Notendanafn eða lykilorð er rangt'),
-  body('password')
-    .isLength({ min: 10, max: 256 })
-    .withMessage('Lykilorð verður að vera a.m.k 10 stafir og hámarki 256 stafir'),
-];
-
-const validationRegister = [
-  body('username')
-    .isLength({ min: 1 })
-    .withMessage('Nafn má ekki vera tómt'),
-  body('username')
-    .custom(async (value) => {
-      // Athugum hvort notendanafn er frátekið
-      const user = await findByUsername(value);
-      if (user) {
-        return Promise.reject();
-      }
-      return true;
-    })
-    .withMessage('Notandanafn er frátekið'),
-  body('password')
-    .isLength({ min: 10, max: 256 })
-    .withMessage('Lykilorð verður að vera a.m.k 10 stafir og hámarki 256 stafir'),
-  body('email')
-    .isLength({ min: 1 })
-    .withMessage('Netfang má ekki vera tómt'),
-  body('email')
-    .isEmail()
-    .withMessage('Netfang verður að vera gilt netfang'),
-  body('email')
-    .custom(async (value) => {
-      // Athugum hvort netfang er frátekið
-      const user = await findByEmail(value);
-      if (user) {
-        return Promise.reject();
-      }
-      return true;
-    })
-    .withMessage('Netfang er frátekið'),
-];
-
-// Viljum keyra sér og með validation, ver gegn „self XSS“
-const xssSanitizationMiddleware = [
-  body('username').customSanitizer((v) => xss(v)),
-  body('email').customSanitizer((v) => xss(v)),
-  body('password').customSanitizer((v) => xss(v)),
-];
-
-// Listi af hreinsun á gögnum
-const sanitize = [
-  body('username').trim().escape(),
-  body('email').normalizeEmail(),
-  body('password').trim().escape(),
-];
 
 // skilar síðu af notendum, aðeins ef notandi sem framkvæmir er stjórnandi
-router.get('/', allUsers);
+router.get(
+  '/',
+  requireAuthentication,
+  ensureAdmin,
+  catchErrors(allUsers),
+);
 /*
 staðfestir og býr til notanda. Skilar auðkenni og netfangi. Notandi sem búinn er til skal
 aldrei vera stjórnandi
@@ -175,15 +135,40 @@ router.post(
   catchErrors(loginUser),
 );
 // skilar upplýsingum um notanda sem á token, auðkenni og netfangi, aðeins ef notandi innskráður
-router.get('/me', requireAuthentication, loggedInUser);
+router.get(
+  '/me',
+  requireAuthentication,
+  loggedInUser,
+);
 // uppfærir netfang, lykilorð eða bæði ef gögn rétt, aðeins ef notandi innskráður
-router.patch('/me', updateLoggedInUser);
+router.patch(
+  '/me',
+  validationUpdate,
+  xssSanitizationMiddleware,
+  requireAuthentication,
+  catchErrors(updateLoggedInUser),
+);
 // skilar notanda, aðeins ef notandi sem framkvæmir er stjórnandi
-router.get('/:userId', oneUser);
+router.get(
+  '/:userId',
+  validationGetUser,
+  requireAuthentication,
+  ensureAdmin,
+  catchErrors(oneUser),
+);
 /*
 breytir hvort notandi sé stjórnandi eða ekki, aðeins ef notandi sem framkvæmir er stjórnandi
 og er ekki að breyta sér sjálfum
 */
-router.patch('/:userId', updateUser);
+router.patch(
+  '/:userId',
+  requireAuthentication,
+  validationUpdateAdmin,
+  validationGetUser,
+  xssSanitizationMiddleware,
+  sanitize,
+  ensureAdmin,
+  catchErrors(updateUser),
+);
 
 // Aldrei skal skila eða sýna hash fyrir lykilorð.

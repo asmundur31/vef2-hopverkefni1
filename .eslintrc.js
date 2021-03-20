@@ -22,5 +22,6 @@ module.exports = {
     'no-restricted-syntax': 0,
     'guard-for-in': 0,
     'no-continue': 0,
+    'no-plusplus': 0,
   },
 };

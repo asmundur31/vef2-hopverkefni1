@@ -110,3 +110,79 @@ export async function createNewUser(username, email, password) {
 
   return false;
 }
+
+export async function getAllUsers() {
+  const q = 'SELECT * FROM users;';
+
+  try {
+    const result = await query(q);
+    if (result.rowCount > 0) {
+      const users = [];
+      for (let i = 0; i < result.rowCount; i++) {
+        const user = result.rows[i];
+        // Fjarlægjum lykilorðið
+        delete user.password;
+        users.push(user);
+      }
+      return users;
+    }
+  } catch (e) {
+    console.error('Gat ekki fundið notendur');
+    return null;
+  }
+  return false;
+}
+
+export async function updateUserAdmin(userId, admin) {
+  const q = 'UPDATE users SET admin = $1 WHERE id = $2 RETURNING *;';
+  try {
+    const result = await query(q, [admin, userId]);
+    if (result.rowCount === 1) {
+      // Fjarlægjum lykilorðið
+      delete result.rows[0].password;
+      return result.rows[0];
+    }
+  } catch (e) {
+    console.error('Gat ekki uppfært notanda');
+    return null;
+  }
+
+  return false;
+}
+
+export async function updateUserMe(user, newEmail, newPassword) {
+  if (newEmail) {
+    const q = 'UPDATE users SET email = $1 WHERE id = $2;';
+    try {
+      await query(q, [newEmail, user.id]);
+    } catch (e) {
+      console.error('Gat ekki uppfært notanda');
+      return null;
+    }
+  }
+  if (newPassword) {
+    const q = 'UPDATE users SET password = $1 WHERE id = $2;';
+    try {
+      const hashedPassword = await bcrypt.hash(newPassword, 11);
+      await query(q, [hashedPassword, user.id]);
+    } catch (e) {
+      console.error('Gat ekki uppfært notanda');
+      return null;
+    }
+  }
+
+  const q = 'SELECT * FROM users WHERE id = $1;';
+  try {
+    const result = await query(q, [user.id]);
+    if (result.rowCount === 1) {
+      // Fjarlægjum lykilorðið
+      delete result.rows[0].password;
+      return result.rows[0];
+    }
+  } catch (e) {
+    console.error('Gat ekki sótt notanda eftir að uppfærslu lauk');
+    return null;
+  }
+
+  return false;
+}
