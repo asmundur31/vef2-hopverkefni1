@@ -154,9 +154,9 @@ export async function selectGenreId(data) {
  * Sækir nöfn á öll genres
  * (/genres GET)
  */
-export async function selectGenres() {
-  const q = 'SELECT name FROM genres';
-  const answer = await query(q);
+export async function selectGenresPaging(offset = 0, limit = 10) {
+  const q = 'SELECT name FROM genres ORDER BY id OFFSET $1 LIMIT $2';
+  const answer = await query(q, [offset, limit]);
   return answer.rows;
 }
 
@@ -223,9 +223,20 @@ export async function selectSeriesPaging(offset = 0, limit = 10) {
  * Sækir seasons eftir seriesId með paging
  * (Fyrir /tv/:id/season/ GET)
  */
-export async function selectSeasonsPaging(offset = 0, limit = 10, seriesId) {
+export async function selectSeasonsPaging(seriesId, offset = 0, limit = 10) {
   const q = 'SELECT * FROM seasons WHERE serie_id=$1 ORDER BY id OFFSET $2 LIMIT $3';
   const result = await query(q, [seriesId, offset, limit]);
+
+  return result.rows;
+}
+
+/**
+ * Sækir eitt season eftir seriesId og seasonNumber
+ * (Fyrir /tv/:id/season/ GET)
+ */
+export async function selectSeason(seriesId, seasonNumber) {
+  const q = 'SELECT * FROM seasons WHERE serie_id=$1 AND number=$2;';
+  const result = await query(q, [seriesId, seasonNumber]);
 
   return result.rows;
 }
@@ -246,6 +257,20 @@ export async function selectEpisode(number, seasonNumber, seriesId) {
 }
 
 /**
+ * Sækir alla episodes í einu season eftir season_number og series_id
+ * (Fyrir /tv/:id/season/:id/episode/:id GET)
+ */
+export async function selectEpisodes(seasonNumber, seriesId) {
+  const q = 'SELECT * FROM episodes WHERE season_number=$1 AND series_id =$2';
+  const data = [
+    seasonNumber,
+    seriesId,
+  ];
+  const result = await query(q, data);
+  return result.rows;
+}
+
+/**
  * Eyðir episode eftir number, season_number og series_id
  * (Fyrir /tv/:id/season/:id/episode/:id DELETE)
  */
@@ -257,6 +282,27 @@ export async function deleteEpisode(number, seasonNumber, seriesId) {
     seriesId,
   ];
   return query(q, data);
+}
+
+export async function selectCountSeries() {
+  const q = 'SELECT COUNT(*) AS count FROM series';
+  const result = await query(q);
+
+  return result.rows[0].count;
+}
+
+export async function selectCountSeasons() {
+  const q = 'SELECT COUNT(*) AS count FROM seasons';
+  const result = await query(q);
+
+  return result.rows[0].count;
+}
+
+export async function selectCountGenres() {
+  const q = 'SELECT COUNT(*) AS count FROM genres';
+  const result = await query(q);
+
+  return result.rows[0].count;
 }
 
 export async function end() {

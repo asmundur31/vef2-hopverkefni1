@@ -11,7 +11,6 @@ import {
   insertSeriesGenres,
   selectGenreId,
   updateImageFromSeries,
-  imageExistsInSeries,
   updatePosterFromSeasons,
 } from './db.js';
 
@@ -162,12 +161,8 @@ async function uploadImageToCloudinary() {
 
 async function updateImageInDatabase(urls) {
   urls.forEach(async (url) => {
-    const result = await imageExistsInSeries(url.file);
-    if (result[0].exists) {
-      await updateImageFromSeries(url.answer.secure_url, url.file);
-    } else {
-      await updatePosterFromSeasons(url.answer.secure_url, url.file);
-    }
+    await updateImageFromSeries(url.answer.secure_url, url.file);
+    await updatePosterFromSeasons(url.answer.secure_url, url.file);
   });
 }
 

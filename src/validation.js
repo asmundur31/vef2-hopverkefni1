@@ -1,4 +1,4 @@
-import { body, param } from 'express-validator';
+import pkg from 'express-validator';
 import xss from 'xss';
 
 import {
@@ -7,6 +7,8 @@ import {
   comparePasswords,
   findById,
 } from './users.js';
+
+const { body, param } = pkg;
 
 export const validationLogin = [
   body('username')

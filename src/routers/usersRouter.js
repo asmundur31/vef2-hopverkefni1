@@ -1,5 +1,5 @@
 import express from 'express';
-import { validationResult } from 'express-validator';
+import pkg from 'express-validator';
 
 import {
   login,
@@ -23,6 +23,8 @@ import {
   sanitize,
 } from '../validation.js';
 import { catchErrors } from '../utils.js';
+
+const { validationResult } = pkg;
 
 export const router = express.Router();
 
