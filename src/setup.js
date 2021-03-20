@@ -12,7 +12,7 @@ import {
   selectGenreId,
   updateImageFromSeries,
   imageExistsInSeries,
-  updateImageFromSeasons,
+  updatePosterFromSeasons,
 } from './db.js';
 
 const schemaFile = './sql/schema.sql';
@@ -94,6 +94,7 @@ async function addEpisodes() {
   }
 }
 
+// eslint-disable-next-line consistent-return
 async function addGenres() {
   const genres = [];
   try {
@@ -165,7 +166,7 @@ async function updateImageInDatabase(urls) {
     if (result[0].exists) {
       await updateImageFromSeries(url.answer.secure_url, url.file);
     } else {
-      await updateImageFromSeasons(url.answer.secure_url, url.file);
+      await updatePosterFromSeasons(url.answer.secure_url, url.file);
     }
   });
 }
