@@ -1,4 +1,6 @@
 import express from 'express';
+import { selectEpisode } from '../db.js';
+import { catchErrors } from '../utils.js';
 
 export const router = express.Router({ mergeParams: true });
 
@@ -10,12 +12,13 @@ function newEpisode(req, res) {
   return res.json(episode);
 }
 
-function getEpisode(req, res) {
+async function getEpisode(req, res) {
   const { seriesId, seasonId, episodeId } = req.params;
-  const episode = {
-    episode: `Hér kemur þáttur með episodeId = ${episodeId}, seasonId = ${seasonId} og seriesId = ${seriesId}`,
-  };
-  return res.json(episode);
+  const e = await selectEpisode(episodeId, seasonId, seriesId);
+  if (e.length === 0) {
+    return res.status(404).json({ error: 'Enginn þáttur með þetta númer (id)' });
+  }
+  return res.json(e);
 }
 
 function deleteEpisode(req, res) {
@@ -27,8 +30,8 @@ function deleteEpisode(req, res) {
 }
 
 // býr til nýjan þátt í season, aðeins ef notandi er stjórnandi
-router.post('/', newEpisode);
+router.post('/', catchErrors(newEpisode));
 // skilar upplýsingum um þátt
-router.get('/:episodeId', getEpisode);
+router.get('/:episodeId', catchErrors(getEpisode));
 // eyðir þætti, aðeins ef notandi er stjórnandi
-router.delete('/:episodeId', deleteEpisode);
+router.delete('/:episodeId', catchErrors(deleteEpisode));

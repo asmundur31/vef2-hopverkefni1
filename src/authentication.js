@@ -1,5 +1,5 @@
 import passport from 'passport';
-import { Strategy, ExtractJwt } from 'passport-jwt';
+import pkg from 'passport-jwt';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import {
@@ -7,6 +7,8 @@ import {
   findByUsername,
   comparePasswords,
 } from './users.js';
+
+const { Strategy, ExtractJwt } = pkg;
 
 dotenv.config();
 
