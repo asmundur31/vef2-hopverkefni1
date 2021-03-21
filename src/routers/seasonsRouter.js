@@ -46,7 +46,7 @@ async function getAllSeasons(req, res) {
   }
 
   const count = await selectCountSeasons();
-  const fullUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
+  const fullUrl = `${req.protocol}://${req.get('host')}${req.baseUrl}`;
   const links = {
     _links: {
       self: {

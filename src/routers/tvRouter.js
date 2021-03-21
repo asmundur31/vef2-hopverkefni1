@@ -36,7 +36,7 @@ async function getSeries(req, res) {
   }
   const count = await selectCountSeries();
 
-  const fullUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
+  const fullUrl = `${req.protocol}://${req.get('host')}${req.baseUrl}`;
 
   const links = {
     _links: {

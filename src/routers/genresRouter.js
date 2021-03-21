@@ -25,7 +25,7 @@ async function allGenres(req, res) {
 
   const count = await selectCountGenres();
 
-  const fullUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
+  const fullUrl = `${req.protocol}://${req.get('host')}${req.baseUrl}`;
 
   const links = {
     _links: {
