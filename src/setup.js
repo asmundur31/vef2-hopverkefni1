@@ -97,7 +97,7 @@ async function addGenres() {
         if (Object.values(genres).indexOf(g) <= -1) {
           genres.push(g);
           const ID = await insertGenres(g);
-          const { id } = ID[0].rows;
+          const { id } = ID.rows[0];
           return { id, g };
         }
       });
