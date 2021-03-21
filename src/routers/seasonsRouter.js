@@ -1,6 +1,8 @@
 /* eslint-disable no-underscore-dangle */
 import express from 'express';
 import pkg from 'express-validator';
+import multer from 'multer';
+
 import { catchErrors } from '../utils.js';
 import {
   selectSeasonsPaging,
@@ -12,9 +14,19 @@ import {
   deleteEpisodesInSeason,
 } from '../db.js';
 import { requireAuthentication, ensureAdmin } from '../authentication.js';
-import { validationSeason, sanitizeSeason } from '../validation.js';
+import { validationSeason, sanitizeSeason, validateImage } from '../validation.js';
 
 const { validationResult } = pkg;
+const upload = multer({
+  storage: multer.diskStorage({
+    destination(req, file, cb) {
+      cb(null, 'data/img/');
+    },
+    filename(req, file, cb) {
+      cb(null, file.originalname);
+    },
+  }),
+});
 
 export const router = express.Router({ mergeParams: true });
 
@@ -85,36 +97,35 @@ async function getOneSeason(req, res) {
 }
 
 async function createSeason(req, res) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty() || req.imageError) {
+    if (req.imageError) {
+      errors.errors.push(req.imageError);
+    }
+    return res.status(400).json(errors);
+  }
   const { seriesId } = req.params;
   const {
     name,
     number,
     airDate,
     overview,
-    poster,
   } = req.body;
-
-  const validation = validationResult(req);
-  if (!validation.isEmpty()) {
-    const errors = validation.array();
-    return res.status(400).json(errors);
-  }
 
   const data = {
     name,
     number,
     airDate,
     overview,
-    poster,
     serieId: seriesId,
   };
-
+  const poster = req.file;
   const result = await selectSeason(seriesId, number);
   if (result.length !== 0) {
     return res.status(400).json({ error: 'Þáttaröð er nú þegar til' });
   }
 
-  const answer = await insertSeason(data);
+  const answer = await insertSeason(data, poster);
   if (!answer) {
     return res.status(400).json({ error: 'Gögn brjóta gegn gildum sem eru í gagnagrunni' });
   }
@@ -149,10 +160,12 @@ router.get('/', catchErrors(getAllSeasons));
 // býr til nýtt í season í sjónvarps seríu, aðeins ef notandi er stjórnandi
 router.post(
   '/',
-  validationSeason,
-  sanitizeSeason,
   requireAuthentication,
   ensureAdmin,
+  upload.single('poster'),
+  validateImage,
+  validationSeason,
+  sanitizeSeason,
   catchErrors(createSeason),
 );
 // skilar stöku season fyrir þátt með grunnupplýsingum, fylki af þáttum

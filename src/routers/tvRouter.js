@@ -1,13 +1,24 @@
 /* eslint-disable no-underscore-dangle */
 import express from 'express';
 import pkg from 'express-validator';
+import multer from 'multer';
 
 import { catchErrors } from '../utils.js';
 import { selectSeriesPaging, selectCountSeries, insertSerie } from '../db.js';
 import { requireAuthentication, ensureAdmin } from '../authentication.js';
-import { validationSerie, sanitizeSerie } from '../validation.js';
+import { validationSerie, sanitizeSerie, validateImage } from '../validation.js';
 
 const { validationResult } = pkg;
+const upload = multer({
+  storage: multer.diskStorage({
+    destination(req, file, cb) {
+      cb(null, 'data/img/');
+    },
+    filename(req, file, cb) {
+      cb(null, file.originalname);
+    },
+  }),
+});
 
 export const router = express.Router({ mergeParams: true });
 
@@ -58,13 +69,18 @@ async function getSeries(req, res) {
 }
 
 async function newSeries(req, res) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty() || req.imageError) {
+    if (req.imageError) {
+      errors.errors.push(req.imageError);
+    }
+    return res.status(400).json(errors);
+  }
   const {
-    id,
     name,
     airDate,
     inProduction,
     tagline,
-    image,
     description,
     language,
     network,
@@ -72,25 +88,18 @@ async function newSeries(req, res) {
   } = req.body;
 
   const data = {
-    id,
     name,
     airDate,
     inProduction,
     tagline,
-    image,
     description,
     language,
     network,
     url,
   };
+  const image = req.file;
 
-  const validation = validationResult(req);
-  if (!validation.isEmpty()) {
-    const errors = validation.array();
-    return res.status(400).json(errors);
-  }
-
-  const answer = await insertSerie(data);
+  const answer = await insertSerie(data, image);
   if (!answer) {
     return res.status(400).json({ error: 'Gögn brjóta gegn gildum sem eru í gagnagrunni' });
   }
@@ -106,9 +115,11 @@ router.get('/', catchErrors(getSeries));
 // býr til nýja sjónvarps seríu, aðeins ef notandi er stjórnandi
 router.post(
   '/',
-  validationSerie,
-  sanitizeSerie,
   requireAuthentication,
   ensureAdmin,
+  upload.single('image'),
+  validateImage,
+  validationSerie,
+  sanitizeSerie,
   catchErrors(newSeries),
 );
