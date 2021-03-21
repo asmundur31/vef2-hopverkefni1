@@ -11,7 +11,7 @@ import { catchErrors } from '../utils.js';
 import {
   validationRating,
   xssSanitizationMiddleware,
-  sanitizeSeries,
+  sanitizeSerie,
   validationNewRating,
   validationUpdateRating,
   validationState,
@@ -32,7 +32,7 @@ import {
   seriesUpdate,
   deleteEpisodesInSeries,
   deleteSeasonsInSeries,
-  deleteSeries
+  deleteSeries,
 } from '../db.js';
 
 const { validationResult } = pkg;
@@ -201,8 +201,7 @@ router.patch(
   upload.single('image'),
   validateImage,
   validationUpdateSeries,
-  xssSanitizationMiddleware,
-  sanitizeSeries,
+  sanitizeSerie,
   catchErrors(updateSeries),
 );
 // eyðir sjónvarps seríu, aðeins ef notandi er stjórnandi
