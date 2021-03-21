@@ -1,24 +1,83 @@
 import express from 'express';
+import pkg from 'express-validator';
+import multer from 'multer';
 
+import {
+  requireAuthentication,
+  authenticateIfLoggedIn,
+  ensureAdmin,
+} from '../authentication.js';
 import { catchErrors } from '../utils.js';
-import { requireAuthentication, ensureAdmin } from '../authentication.js';
-import { deleteEpisodesInSeries, deleteSeasonsInSeries, deleteSeries } from '../db.js';
+import {
+  validationRating,
+  xssSanitizationMiddleware,
+  sanitizeSeries,
+  validationNewRating,
+  validationUpdateRating,
+  validationState,
+  validationNewState,
+  validationUpdateState,
+  validationUpdateSeries,
+  validateImage,
+} from '../validation.js';
+import {
+  newRating,
+  updateRating,
+  newState,
+  stateUpdate,
+} from '../users.js';
+import {
+  getRatingStatus,
+  getSeriesOne,
+  seriesUpdate,
+  deleteEpisodesInSeries,
+  deleteSeasonsInSeries,
+  deleteSeries
+} from '../db.js';
+
+const { validationResult } = pkg;
+const upload = multer({
+  storage: multer.diskStorage({
+    destination(req, file, cb) {
+      cb(null, 'data/img/');
+    },
+    filename(req, file, cb) {
+      cb(null, file.originalname);
+    },
+  }),
+});
 
 export const router = express.Router({ mergeParams: true });
 
-function getOneSeries(req, res) {
+async function getOneSeries(req, res) {
   const { seriesId } = req.params;
-  const oneSeries = {
-    oneSeries: `Beðið var um seríu með seriesId = ${seriesId}`,
-  };
+  const oneSeries = await getSeriesOne(seriesId);
+  // Ef eitthver er loggaður inn
+  if (req.user) {
+    // Bætum við rate og state ef það er til
+    const rateState = await getRatingStatus(req.user.id, seriesId);
+    if (rateState && rateState.rate) {
+      oneSeries.rate = rateState.rate;
+    }
+    if (rateState && rateState.state) {
+      oneSeries.state = rateState.state;
+    }
+  }
   return res.json(oneSeries);
 }
 
-function updateSeries(req, res) {
+async function updateSeries(req, res) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty() || req.imageError) {
+    if (req.imageError) {
+      errors.errors.push(req.imageError);
+    }
+    return res.status(400).json(errors);
+  }
   const { seriesId } = req.params;
-  const updatedSeries = {
-    updateSeries: `Uppfærum seríu með seriesId = ${seriesId}`,
-  };
+  const data = req.body;
+  const image = req.file;
+  const updatedSeries = await seriesUpdate(seriesId, data, image);
   return res.json(updatedSeries);
 }
 
@@ -49,59 +108,103 @@ async function deleteSeriesR(req, res) {
   return res.json(deletedSeries);
 }
 
-function newRating(req, res) {
+async function addRate(req, res) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json(errors);
+  }
   const { seriesId } = req.params;
-  const rating = {
-    rating: `Ný einkunn frá innskráðum notanda gefin seríu með seriesId = ${seriesId}`,
-  };
-  return res.json(rating);
+  const { rating } = req.body;
+  const rateState = await getRatingStatus(req.user.id, seriesId);
+  let rate;
+  // Ef lína í gagnagrunni er til
+  if (rateState) {
+    rate = await updateRating(req.user.id, seriesId, rating);
+  } else {
+    rate = await newRating(req.user.id, seriesId, rating);
+  }
+  return res.json(rate);
 }
 
-function updateRating(req, res) {
+async function updateRate(req, res) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json(errors);
+  }
   const { seriesId } = req.params;
-  const rating = {
-    rating: `Einkunn uppfærð fyrir innskráðan notanda fyrir seríu með seriesId = ${seriesId}`,
-  };
-  return res.json(rating);
+  const { rating } = req.body;
+  const rate = await updateRating(req.user.id, seriesId, rating);
+  return res.json(rate);
 }
 
-function deleteRating(req, res) {
+async function deleteRate(req, res) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json(errors);
+  }
   const { seriesId } = req.params;
-  const deletedRating = {
-    delete: `Einkunn eytt fyrir innskráðan notanda fyrir seríu með seriesId = ${seriesId}`,
-  };
+  const deletedRating = await updateRating(req.user.id, seriesId);
   return res.json(deletedRating);
 }
 
-function newState(req, res) {
+async function addState(req, res) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json(errors);
+  }
   const { seriesId } = req.params;
-  const state = {
-    state: `Ný staða frá innskráðum notanda gefin seríu með seriesId = ${seriesId}`,
-  };
-  return res.json(state);
+  const { state } = req.body;
+  const rateState = await getRatingStatus(req.user.id, seriesId);
+  let stateNew;
+  // Ef lína í gagnagrunni er til
+  if (rateState) {
+    stateNew = await stateUpdate(req.user.id, seriesId, state);
+  } else {
+    stateNew = await newState(req.user.id, seriesId, state);
+  }
+  return res.json(stateNew);
 }
 
-function updateState(req, res) {
+async function updateState(req, res) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json(errors);
+  }
   const { seriesId } = req.params;
-  const state = {
-    state: `Staða uppfærð fyrir innskráðan notanda fyrir seríu með seriesId = ${seriesId}`,
-  };
-  return res.json(state);
+  const { state } = req.body;
+  const updatedState = await stateUpdate(req.user.id, seriesId, state);
+  return res.json(updatedState);
 }
 
-function deleteState(req, res) {
+async function deleteState(req, res) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(401).json(errors);
+  }
   const { seriesId } = req.params;
-  const deletedState = {
-    delete: `Stöðu eytt fyrir innskráðan notanda fyrir seríu með seriesId = ${seriesId}`,
-  };
-  return res.json(deletedState);
+  const stateDeleted = await stateUpdate(req.user.id, seriesId);
+  return res.json(stateDeleted);
 }
 
 // skilar einni sjónvarps seríu með seriesId
 // Ef notandi er innskráður skal sýna einkunn og stöðu viðkomandi á sjónvarps seríu.
-router.get('/', getOneSeries);
+router.get(
+  '/',
+  authenticateIfLoggedIn,
+  catchErrors(getOneSeries),
+);
 // uppfærir sjónvarps seríu, reit fyrir reit, aðeins ef notandi er stjórnandi
-router.patch('/', updateSeries);
+router.patch(
+  '/',
+  requireAuthentication,
+  ensureAdmin,
+  upload.single('image'),
+  validateImage,
+  validationUpdateSeries,
+  xssSanitizationMiddleware,
+  sanitizeSeries,
+  catchErrors(updateSeries),
+);
 // eyðir sjónvarps seríu, aðeins ef notandi er stjórnandi
 router.delete(
   '/',
@@ -109,15 +212,55 @@ router.delete(
   ensureAdmin,
   catchErrors(deleteSeriesR),
 );
+
 // skráir einkunn innskráðs notanda á sjónvarps seríu, aðeins fyrir innskráða notendur
-router.post('/rate', newRating);
+router.post(
+  '/rate',
+  requireAuthentication,
+  validationRating,
+  validationNewRating,
+  xssSanitizationMiddleware,
+  catchErrors(addRate),
+);
 // uppfærir einkunn innskráðs notanda á sjónvarps seríu
-router.patch('/rate', updateRating);
+router.patch(
+  '/rate',
+  requireAuthentication,
+  validationRating,
+  validationUpdateRating,
+  xssSanitizationMiddleware,
+  catchErrors(updateRate),
+);
 // eyðir einkunn innskráðs notanda á sjónvarps seríu
-router.delete('/rate', deleteRating);
+router.delete(
+  '/rate',
+  requireAuthentication,
+  validationUpdateRating,
+  catchErrors(deleteRate),
+);
+
 // skráir stöðu innskráðs notanda á sjónvarps seríu, aðeins fyrir innskráða notendur
-router.post('/state', newState);
+router.post(
+  '/state',
+  requireAuthentication,
+  validationState,
+  validationNewState,
+  xssSanitizationMiddleware,
+  catchErrors(addState),
+);
 // uppfærir stöðu innskráðs notanda á sjónvarps seríu
-router.patch('/state', updateState);
+router.patch(
+  '/state',
+  requireAuthentication,
+  validationState,
+  validationUpdateState,
+  xssSanitizationMiddleware,
+  catchErrors(updateState),
+);
 // eyðir stöðu innskráðs notanda á sjónvarps seríu
-router.delete('/state', deleteState);
+router.delete(
+  '/state',
+  requireAuthentication,
+  validationUpdateState,
+  catchErrors(deleteState),
+);

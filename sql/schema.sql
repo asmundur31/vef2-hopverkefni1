@@ -51,7 +51,9 @@ CREATE TABLE IF NOT EXISTS users(
     username character varying(255) UNIQUE NOT NULL,
     email varchar(50) not null unique,
     password character varying(255) NOT NULL,
-    admin boolean default false
+    admin boolean default false,
+    created timestamp default current_timestamp,
+    updated timestamp default current_timestamp
 );
 
 --ATH: setja dummy gögn fyrir þessa töflu

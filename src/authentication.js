@@ -98,6 +98,27 @@ export function requireAuthentication(req, res, next) {
   )(req, res, next);
 }
 
+export function authenticateIfLoggedIn(req, res, next) {
+  return passport.authenticate(
+    'jwt',
+    { session: false },
+    (err, user) => {
+      if (err) {
+        return next(err);
+      }
+
+      if (!user) {
+        // Förum í næsta án þess að setja user í req því það er enginn
+        return next();
+      }
+
+      // Látum notanda vera aðgengilegan í rest af middlewares
+      req.user = user;
+      return next();
+    },
+  )(req, res, next);
+}
+
 /**
  * Fall sem athugar hvort innskráður notandi sé admin
  * @param {Object} req Request hluturinn
