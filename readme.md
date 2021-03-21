@@ -21,7 +21,8 @@ Framkvæma á eftirfarandi skref til að keyra verkefnið á eigin tölvu:
 7. Keyra loks `npm start` og þá ætti að vera hægt að kalla á netþjónustuna m.a. með Postman
 
 ### Slóð á Heroku
-Verkefnið er aðgengilegt á slóðinni: ...
+Verkefnið er aðgengilegt á slóðinni: `https://atk6-aoa27-vef2-2021-h1.herokuapp.com`
+
 Þaðan er hægt að kalla á vefþjónustuna m.a. með Postman.
 
 ## Dæmi um köll í vefþjónustu
