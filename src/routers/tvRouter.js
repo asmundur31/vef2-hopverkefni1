@@ -4,7 +4,7 @@ import pkg from 'express-validator';
 import multer from 'multer';
 
 import { catchErrors } from '../utils.js';
-import { selectSeriesPaging, selectCountSeries, insertSerie } from '../db.js';
+import { selectSeriesPaging, selectCountSeries, insertSerieWithImage } from '../db.js';
 import { requireAuthentication, ensureAdmin } from '../authentication.js';
 import { validationSerie, sanitizeSerie, validateImage } from '../validation.js';
 
@@ -99,7 +99,7 @@ async function newSeries(req, res) {
   };
   const image = req.file;
 
-  const answer = await insertSerie(data, image);
+  const answer = await insertSerieWithImage(data, image);
   if (!answer) {
     return res.status(400).json({ error: 'Gögn brjóta gegn gildum sem eru í gagnagrunni' });
   }

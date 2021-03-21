@@ -50,18 +50,53 @@ export async function query(q, values = []) {
  * @param {array} data Fylki af gögnum fyrir umsókn
  * @returns {object} Hlut með niðurstöðu af því að keyra fyrirspurn
  */
-export async function insertSerie(data, image) {
+export async function insertSerie(data) {
+  const q = 'INSERT INTO series(id, name, air_date, in_production, tagline, image, description, language, network, url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id';
+  if (data.airDate === '') {
+    // eslint-disable-next-line no-param-reassign
+    data.airDate = null;
+  }
+
+  const values = [
+    data.id,
+    data.name,
+    data.airDate,
+    data.inProduction,
+    data.tagline,
+    data.image,
+    data.description,
+    data.language,
+    data.network,
+    data.homepage,
+  ];
+  const answer = await query(q, values);
+  return answer;
+}
+
+/**
+ * Bætir við serie.
+ * (Bæta við gögnum úr csv og /tv POST)
+ *
+ * @param {array} data Fylki af gögnum fyrir umsókn
+ * @returns {object} Hlut með niðurstöðu af því að keyra fyrirspurn
+ */
+export async function insertSerieWithImage(data, image) {
   let q = 'SELECT MAX(id) FROM series';
   const result = await query(q);
-  const newId = parseInt(result.rows[0].max, 10) + 1;
+  let newId = 1;
+  if (result.length !== 0) {
+    newId = parseInt(result.rows[0].max, 10) + 1;
+  }
 
   q = 'INSERT INTO series(id, name, air_date, in_production, tagline, image, description, language, network, url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id';
   if (data.airDate === '') {
     // eslint-disable-next-line no-param-reassign
     data.airDate = null;
   }
-
-  const upload = await cloudinary.v2.uploader.upload(image.path);
+  let upload = { secure_url: '' };
+  if (image) {
+    upload = await cloudinary.v2.uploader.upload(image.path);
+  }
   const values = [
     newId,
     data.name,
@@ -98,13 +133,42 @@ export async function deleteSeries(data) {
  * @param {} data gögn fyrir season
  * @returns fyrirspurn
  */
-export async function insertSeason(data, poster) {
+export async function insertSeason(data) {
   const q = 'INSERT INTO seasons(name, number, air_date, overview, poster, serie_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id';
   if (data.airDate === '') {
     // eslint-disable-next-line no-param-reassign
     data.airDate = null;
   }
-  const upload = await cloudinary.v2.uploader.upload(poster.path);
+  const values = [
+    data.name,
+    data.number,
+    data.airDate,
+    data.overview,
+    data.poster,
+    data.serieId,
+  ];
+
+  const answer = await query(q, values);
+  return answer;
+}
+
+/**
+ * Bætir við season
+ * (/tv/:id/season/ POST og að bæta við gögnum úr csv)
+ *
+ * @param {} data gögn fyrir season
+ * @returns fyrirspurn
+ */
+export async function insertSeasonWithPoster(data, poster) {
+  const q = 'INSERT INTO seasons(name, number, air_date, overview, poster, serie_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id';
+  if (data.airDate === '') {
+    // eslint-disable-next-line no-param-reassign
+    data.airDate = null;
+  }
+  let upload = { secure_url: '' };
+  if (poster) {
+    upload = await cloudinary.v2.uploader.upload(poster.path);
+  }
   const values = [
     data.name,
     data.number,

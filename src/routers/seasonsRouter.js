@@ -10,7 +10,7 @@ import {
   selectEpisodes,
   selectCountSeasons,
   deleteSeason,
-  insertSeason,
+  insertSeasonWithPoster,
   deleteEpisodesInSeason,
 } from '../db.js';
 import { requireAuthentication, ensureAdmin } from '../authentication.js';
@@ -125,7 +125,7 @@ async function createSeason(req, res) {
     return res.status(400).json({ error: 'Þáttaröð er nú þegar til' });
   }
 
-  const answer = await insertSeason(data, poster);
+  const answer = await insertSeasonWithPoster(data, poster);
   if (!answer) {
     return res.status(400).json({ error: 'Gögn brjóta gegn gildum sem eru í gagnagrunni' });
   }
