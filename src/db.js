@@ -334,7 +334,9 @@ export async function getSeriesOne(seriesId) {
   let q = 'SELECT * FROM series WHERE id = $1';
   let result = await query(q, [seriesId]);
   const series = result.rows[0];
-
+  if (!series) {
+    return null;
+  }
   // Bætum við meðaleinkunn, fjölda einkunna, genres, seasons
   q = 'SELECT AVG(rate) FROM users_series WHERE serie_id = $1';
   result = await query(q, [seriesId]);

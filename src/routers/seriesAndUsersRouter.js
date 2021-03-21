@@ -52,6 +52,9 @@ export const router = express.Router({ mergeParams: true });
 async function getOneSeries(req, res) {
   const { seriesId } = req.params;
   const oneSeries = await getSeriesOne(seriesId);
+  if (!oneSeries) {
+    return res.status(404).json({ error: 'Not found' });
+  }
   // Ef eitthver er loggaður inn
   if (req.user) {
     // Bætum við rate og state ef það er til
