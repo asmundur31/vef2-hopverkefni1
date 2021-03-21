@@ -27,7 +27,16 @@ Verkefnið er aðgengilegt á slóðinni: `https://atk6-aoa27-vef2-2021-h1.herok
 
 ## Dæmi um köll í vefþjónustu
 * `GET` á `/tv/?offset=10&limit=10` mun skila blaðsíðu tvö af sjónvarpsþáttum sem eru til
-* ...
+* `POST` á `/tv/1/season/1/episode` með t.d. eftirfarandi json gögn í `Body` mun búa til nýjan þátt ef notandi er admin
+```json
+{
+    "name": "New episode",
+    "number": 20,
+    "airDate": "2020-02-02",
+    "overview": "New episode"
+}
+```
+* `DELETE` á `/tv/1/season/1` mun eyða þáttaröð 1 í sjónvarpsþætti 1 ásamt öllum þeim þáttum sem eru í þeirri þáttaröð
 
 ## Innskráning
 ### Admin
