@@ -53,7 +53,6 @@ async function addSeries() {
     data.map(async (d) => {
       await insertSerie(d);
     });
-    // await insertSerie(data[0]);
   } catch (error) {
     console.error('Error while parsing csv data: ', error.message);
   }
@@ -62,7 +61,6 @@ async function addSeries() {
 async function addSeasons() {
   try {
     const data = await getData('./data/seasons.csv');
-    // console.log('testGetData: parsed CSV data:', data);
     data.map(async (d) => {
       try {
         await insertSeason(d);
@@ -70,7 +68,6 @@ async function addSeasons() {
         console.error('Erro while inserting: ', error.message);
       }
     });
-    // await insertSeason(data[0]);
   } catch (error) {
     console.error('Error while parsing csv data: ', error.message);
   }
@@ -79,7 +76,6 @@ async function addSeasons() {
 async function addEpisodes() {
   try {
     const data = await getData('./data/episodes.csv');
-    // console.log('testGetData: parsed CSV data:', data);
     data.map(async (d) => {
       try {
         await insertEpisode(d);
@@ -87,7 +83,6 @@ async function addEpisodes() {
         console.error('Erro while inserting: ', error.message);
       }
     });
-    // await insertEpisode(data[0]);
   } catch (error) {
     console.error('Error while parsing csv data: ', error.message);
   }
@@ -108,7 +103,7 @@ async function addGenres() {
           // genresWithId.push({ id: ID[0].id, genre: g });
           // await insertSeriesGenres(d.id, ID);
           // console.log(genresWithId);
-          const { id } = ID[0];
+          const { id } = ID[0].rows;
           return { id, g };
         }
       });
@@ -134,13 +129,6 @@ async function addSeriesGenres() {
         } catch (e) {
           console.error('Error while inserting series_genres: ', e.message);
         }
-        /* console.log(genresWithId);
-        genresWithId.map(async (gI) => {
-          if (gI.genre.localeCompare(g.toString()) === 0) {
-            // await insertSeriesGenres(d.id, gI.id);
-            console.log('here');
-          }
-        }); */
       });
     });
   } catch (error) {

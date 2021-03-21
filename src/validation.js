@@ -138,3 +138,156 @@ export const sanitize = [
   body('password').trim().escape(),
   body('admin').trim().escape(),
 ];
+
+export const validationGenre = [
+  body('name')
+    .isString()
+    .isLength({ min: 1 })
+    .withMessage('Nafn má ekki vera tómt'),
+];
+
+export const sanitizeGenre = [
+  body('name').customSanitizer((v) => xss(v)),
+  body('name').trim().escape(),
+];
+
+export const validationEpisode = [
+  body('name')
+    .isString()
+    .isLength({ min: 1, max: 129 })
+    .withMessage('Nafn má ekki vera tómt'),
+  body('number')
+    .isLength({ min: 1 })
+    .isInt({ min: 1 })
+    .withMessage('Númer má ekki vera tómt og verður að vera hærra en 0'),
+  body('airDate')
+    .isDate()
+    .withMessage('Dagsetning á að vera á forminu YYYY-MM-DD')
+    .optional(),
+  body('overview')
+    .isString()
+    .optional(),
+  param('seasonId')
+    .toInt()
+    .isLength({ min: 1 })
+    .withMessage('Númer á season má ekki vera tómt'),
+  param('seriesId')
+    .toInt()
+    .isLength({ min: 1 })
+    .withMessage('Id á serie má ekki vera tómt'),
+];
+
+export const sanitizeEpisode = [
+  body('name').customSanitizer((v) => xss(v)),
+  body('name').trim().escape(),
+  body('number').customSanitizer((v) => xss(v)),
+  body('number').trim().escape(),
+  body('airDate').customSanitizer((v) => xss(v)),
+  body('airDate').trim().escape(),
+  body('overrview').customSanitizer((v) => xss(v)),
+  body('overview').trim().escape(),
+  param('seasonId').customSanitizer((v) => xss(v)),
+  param('seasonId').trim().escape(),
+  param('seriesId').customSanitizer((v) => xss(v)),
+  param('seriesId').trim().escape(),
+];
+
+export const validationSeason = [
+  body('name')
+    .isString()
+    .isLength({ min: 1, max: 129 })
+    .withMessage('Nafn má ekki vera tómt'),
+  body('number')
+    .isLength({ min: 1 })
+    .isInt({ min: 1 })
+    .withMessage('Númer má ekki vera tómt og verður að vera hærra en 0'),
+  body('airDate')
+    .isDate()
+    .withMessage('Dagsetning á að vera á forminu YYYY-MM-DD')
+    .optional(),
+  body('overview')
+    .isString()
+    .optional(),
+  body('poster')
+    .isLength({ min: 1 })
+    .withMessage('Poster má ekki vera tómt'),
+  param('seriesId')
+    .toInt()
+    .isLength({ min: 1 })
+    .withMessage('Id á serie má ekki vera tómt'),
+];
+
+export const sanitizeSeason = [
+  body('name').customSanitizer((v) => xss(v)),
+  body('name').trim().escape(),
+  body('number').customSanitizer((v) => xss(v)),
+  body('number').trim().escape(),
+  body('airDate').customSanitizer((v) => xss(v)),
+  body('airDate').trim().escape(),
+  body('overrview').customSanitizer((v) => xss(v)),
+  body('overview').trim().escape(),
+  body('poster').customSanitizer((v) => xss(v)),
+  body('poster').trim().escape(),
+  param('seriesId').customSanitizer((v) => xss(v)),
+  param('seriesId').trim().escape(),
+];
+
+export const validationSerie = [
+  body('id')
+    .isLength({ min: 1 })
+    .withMessage('Id má ekki vera tómt'),
+  body('name')
+    .isString()
+    .isLength({ min: 1, max: 129 })
+    .withMessage('Nafn má ekki vera tómt'),
+  body('airDate')
+    .isDate()
+    .withMessage('Dagsetning á að vera á forminu YYYY-MM-DD')
+    .optional(),
+  body('inProduction')
+    .isBoolean()
+    .withMessage('Production þarf að vera boolean'),
+  body('tagline')
+    .isString()
+    .optional(),
+  body('image')
+    .isLength({ min: 1 })
+    .withMessage('Image má ekki vera tómt'),
+  body('description')
+    .isString()
+    .optional(),
+  body('language')
+    .isString()
+    .isLength({ min: 1, max: 2 })
+    .withMessage('Language má ekki vera tómt'),
+  body('network')
+    .isString()
+    .isLength({ min: 1 })
+    .withMessage('Network má ekki vera tómt'),
+  body('url')
+    .isString()
+    .optional(),
+];
+
+export const sanitizeSerie = [
+  body('id').customSanitizer((v) => xss(v)),
+  body('id').trim().escape(),
+  body('name').customSanitizer((v) => xss(v)),
+  body('name').trim().escape(),
+  body('airDate').customSanitizer((v) => xss(v)),
+  body('airDate').trim().escape(),
+  body('inProduction').customSanitizer((v) => xss(v)),
+  body('inProduction').trim().escape(),
+  body('tagline').customSanitizer((v) => xss(v)),
+  body('tagline').trim().escape(),
+  body('image').customSanitizer((v) => xss(v)),
+  body('image').trim().escape(),
+  body('description').customSanitizer((v) => xss(v)),
+  body('description').trim().escape(),
+  body('language').customSanitizer((v) => xss(v)),
+  body('language').trim().escape(),
+  body('network').customSanitizer((v) => xss(v)),
+  body('network').trim().escape(),
+  body('url').customSanitizer((v) => xss(v)),
+  body('url').trim().escape(),
+];

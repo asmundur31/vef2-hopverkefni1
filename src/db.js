@@ -44,7 +44,7 @@ export async function query(q, values = []) {
  * @returns {object} Hlut með niðurstöðu af því að keyra fyrirspurn
  */
 export async function insertSerie(data) {
-  const q = 'INSERT INTO series(id, name, air_date, in_production, tagline, image, description, language, network, url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)';
+  const q = 'INSERT INTO series(id, name, air_date, in_production, tagline, image, description, language, network, url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id';
   if (data.airDate === '') {
     // eslint-disable-next-line no-param-reassign
     data.airDate = null;
@@ -61,7 +61,8 @@ export async function insertSerie(data) {
     data.network,
     data.homepage,
   ];
-  return query(q, values);
+  const answer = await query(q, values);
+  return answer;
 }
 
 /**
@@ -73,8 +74,8 @@ export async function insertSerie(data) {
  */
 export async function deleteSeries(data) {
   const q = 'DELETE FROM series WHERE id=$1';
-  const values = [data];
-  return query(q, values);
+  const answer = await query(q, [data]);
+  return answer;
 }
 
 /**
@@ -85,7 +86,7 @@ export async function deleteSeries(data) {
  * @returns fyrirspurn
  */
 export async function insertSeason(data) {
-  const q = 'INSERT INTO seasons(name, number, air_date, overview, poster, serie_id) VALUES ($1, $2, $3, $4, $5, $6)';
+  const q = 'INSERT INTO seasons(name, number, air_date, overview, poster, serie_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id';
   if (data.airDate === '') {
     // eslint-disable-next-line no-param-reassign
     data.airDate = null;
@@ -99,7 +100,34 @@ export async function insertSeason(data) {
     data.serieId,
   ];
 
-  return query(q, values);
+  const answer = await query(q, values);
+  return answer;
+}
+
+/**
+ * Eyðir season eftir season_number og series_id
+ * (Fyrir /tv/:id/season/:id DELETE)
+ */
+export async function deleteSeason(seasonNumber, seriesId) {
+  const q = 'DELETE FROM seasons WHERE number=$1 AND serie_id =$2 RETURNING id';
+  const data = [
+    seasonNumber,
+    seriesId,
+  ];
+  const answer = await query(q, data);
+  return answer;
+}
+
+/**
+ * Eyðir seasons í seríu eftir series_id
+ */
+export async function deleteSeasonsInSeries(seriesId) {
+  const q = 'DELETE FROM seasons WHERE serie_id =$1 RETURNING id';
+  const data = [
+    seriesId,
+  ];
+  const answer = await query(q, data);
+  return answer;
 }
 
 /**
@@ -110,7 +138,7 @@ export async function insertSeason(data) {
  * @returns fyrirspurn
  */
 export async function insertEpisode(data) {
-  const q = 'INSERT INTO episodes(name, number, air_date, overview, season_number, series_id) VALUES ($1, $2, $3, $4, $5, $6)';
+  const q = 'INSERT INTO episodes(name, number, air_date, overview, season_number, series_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id';
   if (data.airDate === '') {
     // eslint-disable-next-line no-param-reassign
     data.airDate = null;
@@ -124,7 +152,8 @@ export async function insertEpisode(data) {
     data.serieId,
   ];
 
-  return query(q, values);
+  const answer = await query(q, values);
+  return answer;
 }
 
 /**
@@ -136,7 +165,7 @@ export async function insertEpisode(data) {
 export async function insertGenres(data) {
   const q = 'INSERT INTO genres(name) VALUES ($1) RETURNING id';
   const answer = await query(q, [data]);
-  return answer.rows;
+  return answer;
 }
 
 /**
@@ -275,13 +304,41 @@ export async function selectEpisodes(seasonNumber, seriesId) {
  * (Fyrir /tv/:id/season/:id/episode/:id DELETE)
  */
 export async function deleteEpisode(number, seasonNumber, seriesId) {
-  const q = 'DELETE FROM episodes WHERE number=$1 AND season_number=$2 AND series_id =$3';
+  const q = 'DELETE FROM episodes WHERE number=$1 AND season_number=$2 AND series_id =$3 RETURNING id';
   const data = [
     number,
     seasonNumber,
     seriesId,
   ];
-  return query(q, data);
+  const answer = await query(q, data);
+  return answer;
+}
+
+/**
+ * Eyðir episodes í season eftir season_number og series_id
+ * (Fyrir /tv/:id/season/:id/ DELETE)
+ */
+export async function deleteEpisodesInSeason(seasonNumber, seriesId) {
+  const q = 'DELETE FROM episodes WHERE season_number=$1 AND series_id =$2 RETURNING id';
+  const data = [
+    seasonNumber,
+    seriesId,
+  ];
+  const answer = await query(q, data);
+  return answer;
+}
+
+/**
+ * Eyðir episodes í season eftir season_number og series_id
+ * (Fyrir /tv/:id/season/:id/ DELETE)
+ */
+export async function deleteEpisodesInSeries(seriesId) {
+  const q = 'DELETE FROM episodes WHERE series_id =$1 RETURNING id';
+  const data = [
+    seriesId,
+  ];
+  const answer = await query(q, data);
+  return answer;
 }
 
 export async function selectCountSeries() {

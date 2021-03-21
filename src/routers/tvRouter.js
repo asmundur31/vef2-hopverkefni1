@@ -1,8 +1,13 @@
 /* eslint-disable no-underscore-dangle */
 import express from 'express';
+import pkg from 'express-validator';
 
 import { catchErrors } from '../utils.js';
-import { selectSeriesPaging, selectCountSeries } from '../db.js';
+import { selectSeriesPaging, selectCountSeries, insertSerie } from '../db.js';
+import { requireAuthentication, ensureAdmin } from '../authentication.js';
+import { validationSerie, sanitizeSerie } from '../validation.js';
+
+const { validationResult } = pkg;
 
 export const router = express.Router({ mergeParams: true });
 
@@ -11,6 +16,9 @@ async function getSeries(req, res) {
   offset = Number(offset);
   limit = Number(limit);
   const answer = await selectSeriesPaging(offset, limit);
+  if (!answer) {
+    return res.json({ error: 'Ekki tókst að ná í sjónvarpsþætti' });
+  }
 
   if (answer.length === 0) {
     return res.status(404).json({ error: 'Enginn sjónvarpsþáttur á þessu bili' });
@@ -46,11 +54,46 @@ async function getSeries(req, res) {
   return res.json(series);
 }
 
-function newSeries(req, res) {
-  // Tökum við gögnum og vistum í gagnagrunn
-  // Skilum síðan nýju seríunni
+async function newSeries(req, res) {
+  const {
+    id,
+    name,
+    airDate,
+    inProduction,
+    tagline,
+    image,
+    description,
+    language,
+    network,
+    url,
+  } = req.body;
+
+  const data = {
+    id,
+    name,
+    airDate,
+    inProduction,
+    tagline,
+    image,
+    description,
+    language,
+    network,
+    url,
+  };
+
+  const validation = validationResult(req);
+  if (!validation.isEmpty()) {
+    const errors = validation.array();
+    return res.status(400).json(errors);
+  }
+
+  const answer = await insertSerie(data);
+  if (!answer) {
+    return res.status(400).json({ error: 'Gögn brjóta gegn gildum sem eru í gagnagrunni' });
+  }
+
   const newData = {
-    newSeries: 'Hér kemur ný series',
+    newSeries: 'Nýr sjónvarpsþáttur búinn til',
   };
   return res.json(newData);
 }
@@ -58,4 +101,11 @@ function newSeries(req, res) {
 // skilar síðum af sjónvarps seríum með grunnupplýsingum
 router.get('/', catchErrors(getSeries));
 // býr til nýja sjónvarps seríu, aðeins ef notandi er stjórnandi
-router.post('/', catchErrors(newSeries));
+router.post(
+  '/',
+  validationSerie,
+  sanitizeSerie,
+  requireAuthentication,
+  ensureAdmin,
+  catchErrors(newSeries),
+);

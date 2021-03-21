@@ -1,6 +1,8 @@
 import express from 'express';
 
 import { catchErrors } from '../utils.js';
+import { requireAuthentication, ensureAdmin } from '../authentication.js';
+import { deleteEpisodesInSeries, deleteSeasonsInSeries, deleteSeries } from '../db.js';
 
 export const router = express.Router({ mergeParams: true });
 
@@ -20,8 +22,27 @@ function updateSeries(req, res) {
   return res.json(updatedSeries);
 }
 
-function deleteSeries(req, res) {
+async function deleteSeriesR(req, res) {
   const { seriesId } = req.params;
+
+  // Eyðum fyrst þáttum í seríu
+  const answerE = await deleteEpisodesInSeries(seriesId);
+  if (!answerE) {
+    return res.json({ error: 'Ekki tókst að eyða þátttum' });
+  }
+
+  // Næst eyðum við seasons í seríu
+  const answerSeason = await deleteSeasonsInSeries(seriesId);
+  if (!answerSeason) {
+    return res.json({ error: 'Ekki tókst að eyða þáttaröðum' });
+  }
+
+  // Eyðum loks seríu
+  const answerSerie = await deleteSeries(seriesId);
+  if (!answerSerie) {
+    return res.json({ error: 'Ekki tókst að eyða sjónvarpsþætti' });
+  }
+
   const deletedSeries = {
     delete: `Eyðum seríu með seriesId = ${seriesId}`,
   };
@@ -82,7 +103,12 @@ router.get('/', getOneSeries);
 // uppfærir sjónvarps seríu, reit fyrir reit, aðeins ef notandi er stjórnandi
 router.patch('/', updateSeries);
 // eyðir sjónvarps seríu, aðeins ef notandi er stjórnandi
-router.delete('/', deleteSeries);
+router.delete(
+  '/',
+  requireAuthentication,
+  ensureAdmin,
+  catchErrors(deleteSeriesR),
+);
 // skráir einkunn innskráðs notanda á sjónvarps seríu, aðeins fyrir innskráða notendur
 router.post('/rate', newRating);
 // uppfærir einkunn innskráðs notanda á sjónvarps seríu
