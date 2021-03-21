@@ -117,7 +117,7 @@ async function addSeriesGenres() {
       genreForSeries.map(async (g) => {
         const id = await selectGenreId(g);
         try {
-          await insertSeriesGenres(d.id, id[0].id);
+          await insertSeriesGenres(d.id, id.rows[0].id);
         } catch (e) {
           console.error('Error while inserting series_genres: ', e.message);
         }

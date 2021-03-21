@@ -176,7 +176,7 @@ export async function insertGenres(data) {
 export async function selectGenreId(data) {
   const q = 'SELECT id FROM genres WHERE name = $1';
   const answer = await query(q, [data.toString()]);
-  return answer.rows;
+  return answer;
 }
 
 /**
@@ -196,12 +196,13 @@ export async function selectGenresPaging(offset = 0, limit = 10) {
  * @returns fyrirspurn
  */
 export async function insertSeriesGenres(idSeries, idGenres) {
-  const q = 'INSERT INTO series_genres(serie_id, genre_id) VALUES ($1, $2)';
+  const q = 'INSERT INTO series_genres(serie_id, genre_id) VALUES ($1, $2) RETURNING id';
   const values = [
     idSeries,
     idGenres,
   ];
-  return query(q, values);
+  const answer = await query(q, values);
+  return answer;
 }
 
 /**

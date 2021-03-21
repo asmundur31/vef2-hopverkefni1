@@ -1,9 +1,17 @@
+/* eslint-disable no-await-in-loop */
 /* eslint-disable no-underscore-dangle */
 import express from 'express';
 import pkg from 'express-validator';
 
 import { catchErrors } from '../utils.js';
-import { selectSeriesPaging, selectCountSeries, insertSerie } from '../db.js';
+import {
+  selectSeriesPaging,
+  selectCountSeries,
+  insertSerie,
+  selectGenreId,
+  insertSeriesGenres,
+  insertGenres,
+} from '../db.js';
 import { requireAuthentication, ensureAdmin } from '../authentication.js';
 import { validationSerie, sanitizeSerie } from '../validation.js';
 
@@ -66,6 +74,7 @@ async function newSeries(req, res) {
     language,
     network,
     url,
+    genre,
   } = req.body;
 
   const data = {
@@ -90,6 +99,18 @@ async function newSeries(req, res) {
   const answer = await insertSerie(data);
   if (!answer) {
     return res.status(400).json({ error: 'Gögn brjóta gegn gildum sem eru í gagnagrunni' });
+  }
+
+  const genres = genre.split(', ');
+
+  for (const g of genres) {
+    const result = await selectGenreId(g);
+    if (result.rows.length !== 0) {
+      await insertSeriesGenres(id, result.rows[0].id);
+    } else {
+      const genreId = await insertGenres(g);
+      await insertSeriesGenres(id, genreId.rows[0].id);
+    }
   }
 
   const newData = {

@@ -267,6 +267,9 @@ export const validationSerie = [
   body('url')
     .isString()
     .optional(),
+  body('genre')
+    .isString()
+    .optional(),
 ];
 
 export const sanitizeSerie = [
@@ -290,4 +293,6 @@ export const sanitizeSerie = [
   body('network').trim().escape(),
   body('url').customSanitizer((v) => xss(v)),
   body('url').trim().escape(),
+  body('genre').customSanitizer((v) => xss(v)),
+  body('genre').trim().escape(),
 ];
