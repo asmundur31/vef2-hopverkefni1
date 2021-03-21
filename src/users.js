@@ -1,34 +1,6 @@
 import bcrypt from 'bcrypt';
-import pg from 'pg';
-import dotenv from 'dotenv';
 
-dotenv.config();
-
-const connectionString = process.env.DATABASE_URL;
-
-const pool = new pg.Pool({ connectionString });
-
-pool.on('error', (err) => {
-  console.error('Unexpected error on idle client', err);
-  process.exit(-1);
-});
-
-export async function query(q, values = []) {
-  const client = await pool.connect();
-
-  let result;
-
-  try {
-    result = await client.query(q, values);
-  } catch (err) {
-    console.error('Villa í query', err);
-    throw err;
-  } finally {
-    client.release();
-  }
-
-  return result;
-}
+import { query } from './db.js';
 
 export async function comparePasswords(password, hash) {
   const result = await bcrypt.compare(password, hash);
@@ -134,7 +106,7 @@ export async function getAllUsers() {
 }
 
 export async function updateUserAdmin(userId, admin) {
-  const q = 'UPDATE users SET admin = $1 WHERE id = $2 RETURNING *;';
+  const q = 'UPDATE users SET admin = $1, updated = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *;';
   try {
     const result = await query(q, [admin, userId]);
     if (result.rowCount === 1) {
@@ -171,7 +143,8 @@ export async function updateUserMe(user, newEmail, newPassword) {
     }
   }
 
-  const q = 'SELECT * FROM users WHERE id = $1;';
+  // Uppfærum síðan updated og sækjum userinn
+  const q = 'UPDATE users SET updated = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *;';
   try {
     const result = await query(q, [user.id]);
     if (result.rowCount === 1) {
@@ -185,4 +158,46 @@ export async function updateUserMe(user, newEmail, newPassword) {
   }
 
   return false;
+}
+
+export async function newRating(userId, seriesId, rating) {
+  const q = 'INSERT INTO users_series (serie_id, user_id, rate) VALUES ($1, $2, $3) RETURNING *;';
+  const result = await query(q, [seriesId, userId, rating]);
+  const rate = result.rows[0];
+  return rate;
+}
+
+export async function updateRating(userId, seriesId, rating = null) {
+  let q;
+  let result;
+  if (rating) {
+    q = 'UPDATE users_series SET rate = $1 WHERE user_id = $2 AND serie_id = $3 RETURNING *';
+    result = await query(q, [rating, userId, seriesId]);
+  } else {
+    q = 'UPDATE users_series SET rate = null WHERE user_id = $1 AND serie_id = $2 RETURNING *';
+    result = await query(q, [userId, seriesId]);
+  }
+  const rate = result.rows[0];
+  return rate;
+}
+
+export async function newState(userId, seriesId, state) {
+  const q = 'INSERT INTO users_series (serie_id, user_id, state) VALUES ($1, $2, $3) RETURNING *;';
+  const result = await query(q, [seriesId, userId, state]);
+  const stateNew = result.rows[0];
+  return stateNew;
+}
+
+export async function stateUpdate(userId, seriesId, state = null) {
+  let q;
+  let result;
+  if (state) {
+    q = 'UPDATE users_series SET state = $1 WHERE user_id = $2 AND serie_id = $3 RETURNING *';
+    result = await query(q, [state, userId, seriesId]);
+  } else {
+    q = 'UPDATE users_series SET state = null WHERE user_id = $1 AND serie_id = $2 RETURNING *';
+    result = await query(q, [userId, seriesId]);
+  }
+  const updatedState = result.rows[0];
+  return updatedState;
 }

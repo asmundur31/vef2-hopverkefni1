@@ -1,5 +1,6 @@
 import pg from 'pg';
 import dotenv from 'dotenv';
+import cloudinary from 'cloudinary';
 
 dotenv.config();
 
@@ -7,6 +8,12 @@ const {
   DATABASE_URL: connectionString,
   NODE_ENV: nodeEnv = 'development',
 } = process.env;
+
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_KEY,
+  api_secret: process.env.CLOUD_SECRET,
+});
 
 if (!connectionString) {
   console.error('Vantar DATABASE_URL');
@@ -220,6 +227,89 @@ export async function selectSeriesPaging(offset = 0, limit = 10) {
 }
 
 /**
+ * Sækir eina series
+ * (Fyrir /tv/:seriesId GET)
+ */
+export async function getSeriesOne(seriesId) {
+  let q = 'SELECT * FROM series WHERE id = $1';
+  let result = await query(q, [seriesId]);
+  const series = result.rows[0];
+
+  // Bætum við meðaleinkunn, fjölda einkunna, genres, seasons
+  q = 'SELECT AVG(rate) FROM users_series WHERE serie_id = $1';
+  result = await query(q, [seriesId]);
+  const average = result.rows[0];
+  series.averagerating = Number(average.avg).toPrecision(2);
+
+  q = 'SELECT COUNT(rate) FROM users_series WHERE serie_id = $1';
+  result = await query(q, [seriesId]);
+  const count = result.rows[0];
+  series.ratingcount = count.count;
+
+  q = 'SELECT name FROM genres JOIN series_genres ON genre_id = genres.id WHERE serie_id = $1';
+  result = await query(q, [seriesId]);
+  const genres = result.rows;
+  series.genres = genres;
+
+  q = 'SELECT name, number, air_date, overview, poster FROM seasons WHERE serie_id = $1 ORDER bY number';
+  result = await query(q, [seriesId]);
+  const seasons = result.rows;
+  series.seasons = seasons;
+
+  return series;
+}
+
+/**
+ * Uppfærir eina series
+ * (Fyrir /tv/:seriesId PATCH)
+ */
+export async function seriesUpdate(seriesId, data, image) {
+  let q;
+  let result;
+  if (data.name) {
+    q = 'UPDATE series SET name=$1 WHERE id=$2';
+    result = await query(q, [data.name, seriesId]);
+  }
+  if (data.air_date) {
+    q = 'UPDATE series SET air_date=$1 WHERE id=$2';
+    const date = Date(data.air_date);
+    result = await query(q, [date, seriesId]);
+  }
+  if (data.in_production === 'false' || data.in_production === 'true') {
+    q = 'UPDATE series SET in_production=$1 WHERE id=$2';
+    result = await query(q, [data.in_production, seriesId]);
+  }
+  if (data.tagline) {
+    q = 'UPDATE series SET tagline=$1 WHERE id=$2';
+    result = await query(q, [data.tagline, seriesId]);
+  }
+  if (image) {
+    q = 'UPDATE series SET image=$1 WHERE id=$2';
+    const answer = await cloudinary.v2.uploader.upload(image.path);
+    result = await query(q, [answer.secure_url, seriesId]);
+  }
+  if (data.description) {
+    q = 'UPDATE series SET description=$1 WHERE id=$2';
+    result = await query(q, [data.description, seriesId]);
+  }
+  if (data.language) {
+    q = 'UPDATE series SET language=$1 WHERE id=$2';
+    result = await query(q, [data.language, seriesId]);
+  }
+  if (data.newtwork) {
+    q = 'UPDATE series SET newtwork=$1 WHERE id=$2';
+    result = await query(q, [data.newtwork, seriesId]);
+  }
+  if (data.url) {
+    q = 'UPDATE series SET url=$1 WHERE id=$2';
+    result = await query(q, [data.url, seriesId]);
+  }
+  q = 'SELECT * FROM series WHERE id=$1';
+  result = await query(q, [seriesId]);
+  return result.rows[0];
+}
+
+/**
  * Sækir seasons eftir seriesId með paging
  * (Fyrir /tv/:id/season/ GET)
  */
@@ -303,6 +393,13 @@ export async function selectCountGenres() {
   const result = await query(q);
 
   return result.rows[0].count;
+}
+
+export async function getRatingStatus(userId, seriesId) {
+  const q = 'SELECT * FROM users_series WHERE user_id = $1 AND serie_id = $2';
+  const result = await query(q, [userId, seriesId]);
+
+  return result.rows[0];
 }
 
 export async function end() {
