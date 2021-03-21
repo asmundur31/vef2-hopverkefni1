@@ -1,7 +1,5 @@
 import pkg from 'express-validator';
 import xss from 'xss';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
 
 import {
   findByUsername,
@@ -14,8 +12,6 @@ import {
 } from './db.js';
 
 const { body, param } = pkg;
-
-const path = dirname(fileURLToPath(import.meta.url));
 
 export const validationLogin = [
   body('username')
@@ -199,23 +195,12 @@ export const validationUpdateSeries = [
     .isLength({ min: 1 })
     .withMessage('Nafn má ekki vera tómt')
     .optional(),
-  body('air_date')
-    .custom((value) => {
-      // Reynum að kasta value yfir í löglegt date
-      if (Date.parse(value)) {
-        return true;
-      }
-      return Promise.reject();
-    })
-    .withMessage('Dagsetning ekki á réttu formi')
+  body('airDate')
+    .isDate()
+    .withMessage('Dagsetning á að vera á forminu YYYY-MM-DD')
     .optional(),
-  body('in_production')
-    .custom((value) => {
-      if (value === 'true' || value === 'false') {
-        return true;
-      }
-      return Promise.reject();
-    })
+  body('inProduction')
+    .isBoolean()
     .withMessage('Má bara vera \'true\' eða \'false\'')
     .optional(),
 ];
@@ -249,8 +234,8 @@ export const xssSanitizationMiddleware = [
   body('password').customSanitizer((v) => xss(v)),
   body('admin').customSanitizer((v) => xss(v)),
   body('name').customSanitizer((v) => xss(v)),
-  body('air_time').customSanitizer((v) => xss(v)),
-  body('in_production').customSanitizer((v) => xss(v)),
+  body('airDate').customSanitizer((v) => xss(v)),
+  body('inProduction').customSanitizer((v) => xss(v)),
   body('tagline').customSanitizer((v) => xss(v)),
   body('image').customSanitizer((v) => xss(v)),
   body('description').customSanitizer((v) => xss(v)),
@@ -268,18 +253,6 @@ export const sanitize = [
   body('email').normalizeEmail(),
   body('password').trim().escape(),
   body('admin').trim().escape(),
-];
-
-
-export const sanitizeSeries = [
-  body('name').trim().escape(),
-  body('air_time').toDate(),
-  body('in_production').trim().escape(),
-  body('tagline').trim().escape(),
-  body('description').trim().escape(),
-  body('language').trim().escape(),
-  body('network').trim().escape(),
-  body('url').trim().escape(),
 ];
 
 export const validationGenre = [
@@ -351,9 +324,6 @@ export const validationSeason = [
   body('overview')
     .isString()
     .optional(),
-  body('poster')
-    .isLength({ min: 1 })
-    .withMessage('Poster má ekki vera tómt'),
   param('seriesId')
     .toInt()
     .isLength({ min: 1 })
@@ -369,16 +339,11 @@ export const sanitizeSeason = [
   body('airDate').trim().escape(),
   body('overrview').customSanitizer((v) => xss(v)),
   body('overview').trim().escape(),
-  body('poster').customSanitizer((v) => xss(v)),
-  body('poster').trim().escape(),
   param('seriesId').customSanitizer((v) => xss(v)),
   param('seriesId').trim().escape(),
 ];
 
 export const validationSerie = [
-  body('id')
-    .isLength({ min: 1 })
-    .withMessage('Id má ekki vera tómt'),
   body('name')
     .isString()
     .isLength({ min: 1, max: 129 })
@@ -393,9 +358,6 @@ export const validationSerie = [
   body('tagline')
     .isString()
     .optional(),
-  body('image')
-    .isLength({ min: 1 })
-    .withMessage('Image má ekki vera tómt'),
   body('description')
     .isString()
     .optional(),
@@ -413,8 +375,6 @@ export const validationSerie = [
 ];
 
 export const sanitizeSerie = [
-  body('id').customSanitizer((v) => xss(v)),
-  body('id').trim().escape(),
   body('name').customSanitizer((v) => xss(v)),
   body('name').trim().escape(),
   body('airDate').customSanitizer((v) => xss(v)),
@@ -423,8 +383,6 @@ export const sanitizeSerie = [
   body('inProduction').trim().escape(),
   body('tagline').customSanitizer((v) => xss(v)),
   body('tagline').trim().escape(),
-  body('image').customSanitizer((v) => xss(v)),
-  body('image').trim().escape(),
   body('description').customSanitizer((v) => xss(v)),
   body('description').trim().escape(),
   body('language').customSanitizer((v) => xss(v)),

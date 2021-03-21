@@ -50,19 +50,25 @@ export async function query(q, values = []) {
  * @param {array} data Fylki af gögnum fyrir umsókn
  * @returns {object} Hlut með niðurstöðu af því að keyra fyrirspurn
  */
-export async function insertSerie(data) {
-  const q = 'INSERT INTO series(id, name, air_date, in_production, tagline, image, description, language, network, url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id';
+export async function insertSerie(data, image) {
+  let q = 'SELECT MAX(id) FROM series';
+  const result = await query(q);
+  const newId = parseInt(result.rows[0].max, 10) + 1;
+
+  q = 'INSERT INTO series(id, name, air_date, in_production, tagline, image, description, language, network, url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id';
   if (data.airDate === '') {
     // eslint-disable-next-line no-param-reassign
     data.airDate = null;
   }
+
+  const upload = await cloudinary.v2.uploader.upload(image.path);
   const values = [
-    data.id,
+    newId,
     data.name,
     data.airDate,
     data.inProduction,
     data.tagline,
-    data.image,
+    upload.secure_url,
     data.description,
     data.language,
     data.network,
@@ -92,18 +98,19 @@ export async function deleteSeries(data) {
  * @param {} data gögn fyrir season
  * @returns fyrirspurn
  */
-export async function insertSeason(data) {
+export async function insertSeason(data, poster) {
   const q = 'INSERT INTO seasons(name, number, air_date, overview, poster, serie_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id';
   if (data.airDate === '') {
     // eslint-disable-next-line no-param-reassign
     data.airDate = null;
   }
+  const upload = await cloudinary.v2.uploader.upload(poster.path);
   const values = [
     data.name,
     data.number,
     data.airDate,
     data.overview,
-    data.poster,
+    upload.secure_url,
     data.serieId,
   ];
 
@@ -299,14 +306,17 @@ export async function seriesUpdate(seriesId, data, image) {
     q = 'UPDATE series SET name=$1 WHERE id=$2';
     result = await query(q, [data.name, seriesId]);
   }
-  if (data.air_date) {
-    q = 'UPDATE series SET air_date=$1 WHERE id=$2';
-    const date = Date(data.air_date);
-    result = await query(q, [date, seriesId]);
+  if (data.airDate === '') {
+    // eslint-disable-next-line no-param-reassign
+    data.airDate = null;
   }
-  if (data.in_production === 'false' || data.in_production === 'true') {
+  if (data.airDate) {
+    q = 'UPDATE series SET air_date=$1 WHERE id=$2';
+    result = await query(q, [data.airDate, seriesId]);
+  }
+  if (data.inProduction === 'false' || data.inProduction === 'true') {
     q = 'UPDATE series SET in_production=$1 WHERE id=$2';
-    result = await query(q, [data.in_production, seriesId]);
+    result = await query(q, [data.inProduction, seriesId]);
   }
   if (data.tagline) {
     q = 'UPDATE series SET tagline=$1 WHERE id=$2';
@@ -357,7 +367,7 @@ export async function selectSeason(seriesId, seasonNumber) {
   const q = 'SELECT * FROM seasons WHERE serie_id=$1 AND number=$2;';
   const result = await query(q, [seriesId, seasonNumber]);
 
-  return result.rows;
+  return result.rows[0];
 }
 
 /**
