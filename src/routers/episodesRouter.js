@@ -1,13 +1,49 @@
 import express from 'express';
-import { selectEpisode } from '../db.js';
+import pkg from 'express-validator';
+import { selectEpisode, deleteEpisode, insertEpisode } from '../db.js';
 import { catchErrors } from '../utils.js';
+import { requireAuthentication, ensureAdmin } from '../authentication.js';
+import { sanitizeEpisode, validationEpisode } from '../validation.js';
+
+const { validationResult } = pkg;
 
 export const router = express.Router({ mergeParams: true });
 
-function newEpisode(req, res) {
+async function newEpisode(req, res) {
   const { seriesId, seasonId } = req.params;
+  const {
+    name,
+    number,
+    airDate,
+    overview,
+  } = req.body;
+
+  const validation = validationResult(req);
+  if (!validation.isEmpty()) {
+    const errors = validation.array();
+    return res.status(400).json(errors);
+  }
+  const data = {
+    name,
+    number,
+    airDate,
+    overview,
+    season: seasonId,
+    serieId: seriesId,
+  };
+
+  const result = await selectEpisode(number, seasonId, seriesId);
+  if (result) {
+    return res.status(400).json({ error: 'Þáttur er nú þegar til' });
+  }
+
+  const answer = await insertEpisode(data);
+  if (!answer) {
+    return res.status(400).json({ error: 'Gögn brjóta gegn gildum sem eru í gagnagrunni' });
+  }
+
   const episode = {
-    episode: `Nýr þáttur búinn til fyrir season með seasonId = ${seasonId} og seríu með seriesId = ${seriesId}`,
+    episode: 'Nýr þáttur búinn til',
   };
   return res.json(episode);
 }
@@ -21,17 +57,35 @@ async function getEpisode(req, res) {
   return res.json(e);
 }
 
-function deleteEpisode(req, res) {
+async function deleteEpisodeR(req, res) {
   const { seriesId, seasonId, episodeId } = req.params;
+
+  const answer = await deleteEpisode(episodeId, seasonId, seriesId);
+  if (!answer) {
+    return res.json({ error: 'Ekki tókst að eyða þætti' });
+  }
+
   const episode = {
-    delete: `Eyðum þátt með episodeId = ${episodeId}, seasonId = ${seasonId} og seriesId = ${seriesId}`,
+    delete: 'Þáttur eyddur',
   };
   return res.json(episode);
 }
 
 // býr til nýjan þátt í season, aðeins ef notandi er stjórnandi
-router.post('/', catchErrors(newEpisode));
+router.post(
+  '/',
+  validationEpisode,
+  sanitizeEpisode,
+  requireAuthentication,
+  ensureAdmin,
+  catchErrors(newEpisode),
+);
 // skilar upplýsingum um þátt
 router.get('/:episodeId', catchErrors(getEpisode));
 // eyðir þætti, aðeins ef notandi er stjórnandi
-router.delete('/:episodeId', catchErrors(deleteEpisode));
+router.delete(
+  '/:episodeId',
+  requireAuthentication,
+  ensureAdmin,
+  catchErrors(deleteEpisodeR),
+);

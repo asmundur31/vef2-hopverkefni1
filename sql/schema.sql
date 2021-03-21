@@ -2,18 +2,18 @@ CREATE TABLE IF NOT EXISTS series(
   id int not null unique primary key,
   name varchar(128) not null,
   air_date timestamp with time zone,
-  in_production boolean,
+  in_production boolean not null,
   tagline text,
   image text not null,
   description text,
   language varchar(2) not null,
-  network text,
+  network text not null,
   url text
 );
 
 CREATE TABLE IF NOT EXISTS genres(
     id serial primary key,
-    name text not null
+    name text unique not null
 );
 
 CREATE TABLE IF NOT EXISTS series_genres(
@@ -43,7 +43,6 @@ CREATE TABLE IF NOT EXISTS episodes(
     overview text,
     season_number int not null,
     series_id int not null,
-    -- constraint fk_seasons foreign key(season_number) references seasons(number), --number??
     constraint fk_series foreign key(series_id) references series(id)
 );
 

@@ -1,9 +1,12 @@
 /* eslint-disable no-underscore-dangle */
 import express from 'express';
-import { selectGenresPaging, selectCountGenres } from '../db.js';
+import pkg from 'express-validator';
+import { selectGenresPaging, selectCountGenres, insertGenres } from '../db.js';
 import { catchErrors } from '../utils.js';
 import { requireAuthentication, ensureAdmin } from '../authentication.js';
+import { validationGenre, sanitizeGenre } from '../validation.js';
 
+const { validationResult } = pkg;
 export const router = express.Router();
 
 async function allGenres(req, res) {
@@ -11,6 +14,10 @@ async function allGenres(req, res) {
   offset = Number(offset);
   limit = Number(limit);
   const answer = await selectGenresPaging(offset, limit);
+  if (!answer) {
+    // Númer á villu?
+    return res.json({ error: 'Ekki tókst að ná í sjónvarpsþáttategundir' });
+  }
 
   if (answer.length === 0) {
     return res.status(404).json({ error: 'Engar sjónvarpsþáttategundir á þessu bili' });
@@ -48,9 +55,22 @@ async function allGenres(req, res) {
   return res.json(genres);
 }
 
-function newGenre(req, res) {
+async function newGenre(req, res) {
+  const { name } = req.body;
+
+  const validation = validationResult(req);
+  if (!validation.isEmpty()) {
+    const errors = validation.array();
+    return res.status(400).json(errors);
+  }
+
+  const result = await insertGenres(name);
+  if (!result) {
+    return res.status(400).json({ error: 'Þessi sjónvarpsþáttategund er þegar til' });
+  }
+
   const genres = {
-    newGenre: `Búum til nýtt genre`,
+    newGenre: `Tókst að bæta við nýrri sjónvarpsþáttartegund með id=${result}`,
   };
   return res.json(genres);
 }
@@ -61,6 +81,8 @@ router.get('/', catchErrors(allGenres));
 // býr til tegund, aðeins ef notandi er stjórnandi
 router.post(
   '/',
+  validationGenre,
+  sanitizeGenre,
   requireAuthentication,
   ensureAdmin,
   catchErrors(newGenre),

@@ -1,5 +1,54 @@
 # Vefforritun 2, 2021, hópverkefni 1
 
+Hópmeðlimir: 
+* Auður Katarína Theodórsdóttir - audurkatarina
+* Ásmundur Óskar Ásmundsson - asmundur31
+
+## Upplýsingar um hvernig setja skuli upp verkefnið
+### Setja verkefnið upp á eigin tölvu
+Framkvæma á eftirfarandi skref til að keyra verkefnið á eigin tölvu:
+1. Clone'a eftirfarandi repository
+2. Setja upp PostgreSQL gagnagrunn
+3. Búa til aðgang á Cloudinary
+4. Búa til .env skrá og skilgreina eftirfarandi breytur í henni
+  1. DATABASE_URL = postgres://:@localhost/...
+  2. CLOUD_NAME = ...
+  3. CLOUD_KEY = ...
+  4. CLOUD_SECRET = ...
+  5. JWT_SECRET = ...
+5. Keyra `npm install` til að ná í viðeigandi dependency
+6. Keyra `npm run setup` til að setja gögn inn í gagnagrunn og á Cloudinary
+7. Keyra loks `npm start` og þá ætti að vera hægt að kalla á netþjónustuna m.a. með Postman
+
+### Slóð á Heroku
+Verkefnið er aðgengilegt á slóðinni: ...
+Þaðan er hægt að kalla á vefþjónustuna m.a. með Postman.
+
+## Dæmi um köll í vefþjónustu
+* `GET` á `/tv/?offset=10&limit=10` mun skila blaðsíðu tvö af sjónvarpsþáttum sem eru til
+* ...
+
+## Innskráning
+### Admin
+Hægt er að skrá sig inn sem admin með notendanafni `admin` og lykilorði `123`.
+Það er gert m.a. með því að skrifa eftirfarandi kóða í `Body` með kalli á netþjónustuna:
+```json
+{
+  "username": "admin",
+  "password": 123
+}
+```
+### Almennur notandi
+Hægt er að skrá sig inn sem almennur notandi með notendanafninu `jon` og lykilorði `123`.
+Það er gert m.a. með því að skrifa eftirfarandi kóða í `Body` með kalli á netþjónustuna:
+```json
+{
+  "username": "jon",
+  "password": 123
+}
+```
+
+## Lýsing á verkefni
 Útfæra skal vefþjónustur fyrir sjónvarpsþáttavef:
 
 * Gefin eru/verða gögn fyrir sjónvarpsþætti, season og staka þætti sem flytja þarf inn í gagnagrunn

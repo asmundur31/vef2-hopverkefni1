@@ -1,3 +1,5 @@
+/* eslint-disable consistent-return */
+/* eslint-disable no-return-await */
 import fs, { promises } from 'fs';
 import csvParser from 'csv-parser';
 import cloudinary from 'cloudinary';
@@ -34,11 +36,9 @@ function getData(file) {
       .on('error', (error) => {
         reject(error);
       })
-      // .pipe(csv({ headers: false, separator: ',' }))
       .pipe(csvParser())
       .on('data', (data) => {
         result.push(data);
-        // console.log(data);
       })
       .on('end', () => {
         resolve(result);
@@ -49,11 +49,9 @@ function getData(file) {
 async function addSeries() {
   try {
     const data = await getData('./data/series.csv');
-    // console.log('testGetData: parsed CSV data:', data);
     data.map(async (d) => {
       await insertSerie(d);
     });
-    // await insertSerie(data[0]);
   } catch (error) {
     console.error('Error while parsing csv data: ', error.message);
   }
@@ -62,7 +60,6 @@ async function addSeries() {
 async function addSeasons() {
   try {
     const data = await getData('./data/seasons.csv');
-    // console.log('testGetData: parsed CSV data:', data);
     data.map(async (d) => {
       try {
         await insertSeason(d);
@@ -70,7 +67,6 @@ async function addSeasons() {
         console.error('Erro while inserting: ', error.message);
       }
     });
-    // await insertSeason(data[0]);
   } catch (error) {
     console.error('Error while parsing csv data: ', error.message);
   }
@@ -79,7 +75,6 @@ async function addSeasons() {
 async function addEpisodes() {
   try {
     const data = await getData('./data/episodes.csv');
-    // console.log('testGetData: parsed CSV data:', data);
     data.map(async (d) => {
       try {
         await insertEpisode(d);
@@ -87,32 +82,25 @@ async function addEpisodes() {
         console.error('Erro while inserting: ', error.message);
       }
     });
-    // await insertEpisode(data[0]);
   } catch (error) {
     console.error('Error while parsing csv data: ', error.message);
   }
 }
 
-// eslint-disable-next-line consistent-return
 async function addGenres() {
   const genres = [];
   try {
     const data = await getData('./data/series.csv');
-    // eslint-disable-next-line array-callback-return
     const genresWithId = data.map(async (d) => {
       const genreForSeries = d.genres.split(',');
       const answer = genreForSeries.map(async (g) => {
         if (Object.values(genres).indexOf(g) <= -1) {
           genres.push(g);
           const ID = await insertGenres(g);
-          // genresWithId.push({ id: ID[0].id, genre: g });
-          // await insertSeriesGenres(d.id, ID);
-          // console.log(genresWithId);
-          const { id } = ID[0];
+          const { id } = ID.rows[0];
           return { id, g };
         }
       });
-      // eslint-disable-next-line no-return-await
       return await Promise.all(answer);
     });
     return await Promise.all(genresWithId);
@@ -124,7 +112,6 @@ async function addGenres() {
 async function addSeriesGenres() {
   try {
     const data = await getData('./data/series.csv');
-    // eslint-disable-next-line array-callback-return
     data.map(async (d) => {
       const genreForSeries = d.genres.split(',');
       genreForSeries.map(async (g) => {
@@ -134,13 +121,6 @@ async function addSeriesGenres() {
         } catch (e) {
           console.error('Error while inserting series_genres: ', e.message);
         }
-        /* console.log(genresWithId);
-        genresWithId.map(async (gI) => {
-          if (gI.genre.localeCompare(g.toString()) === 0) {
-            // await insertSeriesGenres(d.id, gI.id);
-            console.log('here');
-          }
-        }); */
       });
     });
   } catch (error) {
@@ -155,7 +135,6 @@ async function uploadImageToCloudinary() {
     );
     return { file, answer };
   });
-  // eslint-disable-next-line no-return-await
   return await Promise.all(response);
 }
 
