@@ -1,3 +1,5 @@
+/* eslint-disable consistent-return */
+/* eslint-disable no-return-await */
 import fs, { promises } from 'fs';
 import csvParser from 'csv-parser';
 import cloudinary from 'cloudinary';
@@ -34,11 +36,9 @@ function getData(file) {
       .on('error', (error) => {
         reject(error);
       })
-      // .pipe(csv({ headers: false, separator: ',' }))
       .pipe(csvParser())
       .on('data', (data) => {
         result.push(data);
-        // console.log(data);
       })
       .on('end', () => {
         resolve(result);
@@ -49,7 +49,6 @@ function getData(file) {
 async function addSeries() {
   try {
     const data = await getData('./data/series.csv');
-    // console.log('testGetData: parsed CSV data:', data);
     data.map(async (d) => {
       await insertSerie(d);
     });
@@ -88,26 +87,20 @@ async function addEpisodes() {
   }
 }
 
-// eslint-disable-next-line consistent-return
 async function addGenres() {
   const genres = [];
   try {
     const data = await getData('./data/series.csv');
-    // eslint-disable-next-line array-callback-return
     const genresWithId = data.map(async (d) => {
       const genreForSeries = d.genres.split(',');
       const answer = genreForSeries.map(async (g) => {
         if (Object.values(genres).indexOf(g) <= -1) {
           genres.push(g);
           const ID = await insertGenres(g);
-          // genresWithId.push({ id: ID[0].id, genre: g });
-          // await insertSeriesGenres(d.id, ID);
-          // console.log(genresWithId);
           const { id } = ID[0].rows;
           return { id, g };
         }
       });
-      // eslint-disable-next-line no-return-await
       return await Promise.all(answer);
     });
     return await Promise.all(genresWithId);
@@ -119,7 +112,6 @@ async function addGenres() {
 async function addSeriesGenres() {
   try {
     const data = await getData('./data/series.csv');
-    // eslint-disable-next-line array-callback-return
     data.map(async (d) => {
       const genreForSeries = d.genres.split(',');
       genreForSeries.map(async (g) => {
@@ -143,7 +135,6 @@ async function uploadImageToCloudinary() {
     );
     return { file, answer };
   });
-  // eslint-disable-next-line no-return-await
   return await Promise.all(response);
 }
 
