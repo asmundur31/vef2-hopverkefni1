@@ -24,24 +24,27 @@ async function getSeries(req, res) {
     return res.status(404).json({ error: 'Enginn sjónvarpsþáttur á þessu bili' });
   }
   const count = await selectCountSeries();
+
+  const fullUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
+
   const links = {
     _links: {
       self: {
-        href: `${req.baseUrl}/?offset=${offset}&limit=${limit}`,
+        href: `${fullUrl}/?offset=${offset}&limit=${limit}`,
       },
     },
   };
 
   if (offset > 0) {
     links._links.prev = {
-      href: `${req.baseUrl}/?offset=${offset - limit}&limit=${limit}`,
+      href: `${fullUrl}/?offset=${offset - limit}&limit=${limit}`,
     };
   }
 
   // eslint-disable-next-line eqeqeq
   if (answer.length == limit && offset + limit != count) {
     links._links.next = {
-      href: `${req.baseUrl}/?offset=${Number(offset) + limit}&limit=${limit}`,
+      href: `${fullUrl}/?offset=${Number(offset) + limit}&limit=${limit}`,
     };
   }
 
