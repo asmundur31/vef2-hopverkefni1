@@ -70,7 +70,7 @@ async function newGenre(req, res) {
   }
 
   const genres = {
-    newGenre: `Tókst að bæta við nýrri sjónvarpsþáttartegund með id=${result}`,
+    newGenre: 'Tókst að bæta við nýrri sjónvarpsþáttartegund',
   };
   return res.json(genres);
 }

@@ -33,7 +33,7 @@ async function newEpisode(req, res) {
   };
 
   const result = await selectEpisode(number, seasonId, seriesId);
-  if (result) {
+  if (result.length !== 0) {
     return res.status(400).json({ error: 'Þáttur er nú þegar til' });
   }
 

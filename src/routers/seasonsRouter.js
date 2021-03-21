@@ -109,7 +109,7 @@ async function createSeason(req, res) {
   };
 
   const result = await selectSeason(seriesId, number);
-  if (result) {
+  if (result.length !== 0) {
     return res.status(400).json({ error: 'Þáttaröð er nú þegar til' });
   }
 
