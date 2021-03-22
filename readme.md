@@ -26,6 +26,20 @@ Verkefnið er aðgengilegt á slóðinni: `https://atk6-aoa27-vef2-2021-h1.herok
 Þaðan er hægt að kalla á vefþjónustuna m.a. með Postman.
 
 ## Dæmi um köll í vefþjónustu
+* `POST` á `/tv` mun búa til nýjan sjónvarpsþátt. Sett inn t.d með postman með eftirfarandi key-value pör í body í form data (til að geta sett inn mynd)
+```json
+{
+    "name": "Svaka sjónvarpsþáttur",
+    "airDate": "2021-10-20",
+    "inProduction": "false",
+    "tagline": "Svaka tagline",
+    "image": (í postman er hægt að velja file),
+    "description": "Svaka lýsing",
+    "language": "is",
+    "network": "Svaka network",
+    "url": "Svaka url"
+}
+```
 * `GET` á `/tv/?offset=10&limit=10` mun skila blaðsíðu tvö af sjónvarpsþáttum sem eru til
 * `POST` á `/tv/1/season/1/episode` með t.d. eftirfarandi json gögn í `Body` mun búa til nýjan þátt ef notandi er admin
 ```json
@@ -36,7 +50,20 @@ Verkefnið er aðgengilegt á slóðinni: `https://atk6-aoa27-vef2-2021-h1.herok
     "overview": "New episode"
 }
 ```
-* `DELETE` á `/tv/1/season/1` mun eyða þáttaröð 1 í sjónvarpsþætti 1 ásamt öllum þeim þáttum sem eru í þeirri þáttaröð
+* `DELETE` á `/tv/1/season/1` mun eyða þáttaröð 1 í sjónvarpsþætti 1 ásamt öllum þeim þáttum sem eru í þeirri þáttaröð ef notandi er admin
+* `POST` á `/tv/1/rate` mun setja rating fyrir sjónvarpsþátt 1 fyrir innskráðan notanda og eftirfarandi í body
+```json
+{
+    "rating": "5",
+}
+```
+* `PATCH` á `/users/me` mun gera breytingar á þeim gildum sem skilgreind eru hér að neðan á innskráðum notanda 
+```json
+{
+    "email": "new@email.is",
+    "password": "newPassword"
+}
+```
 
 ## Innskráning
 ### Admin
