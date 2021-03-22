@@ -66,6 +66,7 @@ Verkefnið er aðgengilegt á slóðinni: `https://atk6-aoa27-vef2-2021-h1.herok
 ```
 
 ## Innskráning
+Til að innskrá er framkvæmd `POST` kall á `/users/login`
 ### Admin
 Hægt er að skrá sig inn sem admin með notendanafni `admin` og lykilorði `123`.
 Það er gert m.a. með því að skrifa eftirfarandi kóða í `Body` með kalli á netþjónustuna:
